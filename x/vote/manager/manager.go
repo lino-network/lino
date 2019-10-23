@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	exportVersion = 1
+	exportVersion = 2
 	importVersion = 1
 )
 
@@ -334,7 +334,7 @@ func (vm VoteManager) GetVoter(ctx sdk.Context, username linotypes.AccountKey) (
 }
 
 // Export storage state.
-func (vm VoteManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
+func (vm VoteManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, stats []model.StakeStatDayIR, filepath string) error {
 	state := &model.VoterTablesIR{
 		Version: exportVersion,
 	}
@@ -344,6 +344,7 @@ func (vm VoteManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath s
 		state.Voters = append(state.Voters, model.VoterIR(*voter))
 		return false
 	})
+	state.StakeStats = stats
 	return utils.Save(filepath, cdc, state)
 }
 

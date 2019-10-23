@@ -31,7 +31,8 @@ type VoteKeeper interface {
 	GetVoter(ctx sdk.Context, username linotypes.AccountKey) (*model.Voter, sdk.Error)
 
 	// import export
-	ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error
+	ExportToFile(
+		ctx sdk.Context, cdc *codec.Codec, stats []model.StakeStatDayIR, filepath string) error
 	ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error
 }
 

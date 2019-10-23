@@ -110,3 +110,6 @@ func (ak AccountKey) IsValid() bool {
 	}
 	return true
 }
+
+// PoolName is the name of a lino pool.
+type PoolName string

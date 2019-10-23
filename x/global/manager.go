@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	exportVersion = 1
+	exportVersion = 2
 	importVersion = 1
 )
 
@@ -475,6 +475,115 @@ func (gm *GlobalManager) GetTPSCapacityRatio(ctx sdk.Context) (sdk.Dec, sdk.Erro
 	return tps.CurrentTPS.Quo(tps.MaxTPS), nil
 }
 
+
+func (gm *GlobalManager) OngoingCoinReturns(ctx sdk.Context) map[types.AccountKey]types.Coin {
+	rst := make(map[types.AccountKey]types.Coin)
+	storeMap := gm.storage.PartialStoreMap(ctx)
+	storeMap[string(model.TimeEventListSubStore)].Iterate(func(key []byte, val interface{}) bool {
+		_, err := strconv.ParseInt(string(key), 10, 64)
+		if err != nil {
+			panic(err)
+		}
+		events := val.(*types.TimeEventList)
+		for _, event := range events.Events {
+			switch v := event.(type) {
+			case types.ReturnCoinEvent:
+				if _, ok := rst[v.Username]; ok {
+					rst[v.Username] = rst[v.Username].Plus(v.Amount)
+				} else {
+					rst[v.Username] = v.Amount
+				}
+			}
+		}
+		return false
+	})
+	return rst
+}
+
+func (gm *GlobalManager) ValidatorInflationPool(ctx sdk.Context) types.Coin {
+	pool, err := gm.storage.GetInflationPool(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return pool.ValidatorInflationPool
+}
+
+func (gm *GlobalManager) DevInflationPool(ctx sdk.Context) types.Coin {
+	pool, err := gm.storage.GetInflationPool(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return pool.DeveloperInflationPool
+}
+
+func (gm *GlobalManager) CCInflationPool(ctx sdk.Context) types.Coin {
+	meta, err := gm.storage.GetConsumptionMeta(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return meta.ConsumptionRewardPool
+}
+
+func (gm *GlobalManager) ConsumptionWindow(ctx sdk.Context) types.MiniDollar {
+	meta, err := gm.storage.GetConsumptionMeta(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return meta.ConsumptionWindow
+}
+
+
+func (gm *GlobalManager) FrictionPool(ctx sdk.Context) types.Coin {
+	storeMap := gm.storage.PartialStoreMap(ctx)
+	total := types.NewCoinFromInt64(0)
+	// export stakes
+	storeMap[string(model.LinoStakeStatSubStore)].Iterate(func(key []byte, val interface{}) bool {
+		stakeStats := val.(*model.LinoStakeStat)
+		total = total.Plus(stakeStats.UnclaimedFriction)
+		return false
+	})
+	return total
+}
+
+
+
+func (gm *GlobalManager) StakeinPool(ctx sdk.Context) types.Coin {
+	storeMap := gm.storage.PartialStoreMap(ctx)
+	lastDay := int64(-1)
+	lastDayTotal := types.NewCoinFromInt64(0)
+	// export stakes
+	storeMap[string(model.LinoStakeStatSubStore)].Iterate(func(key []byte, val interface{}) bool {
+		day, err := strconv.ParseInt(string(key), 10, 64)
+		if err != nil {
+			panic(err)
+		}
+		stakeStats := val.(*model.LinoStakeStat)
+		if day > lastDay {
+			lastDay = day
+			lastDayTotal = stakeStats.TotalLinoStake
+		}
+		return false
+	})
+	return lastDayTotal
+}
+
+func (gm *GlobalManager) StakeStats(ctx sdk.Context) (rst []model.LinoStakeStat, days []int64) {
+	storeMap := gm.storage.PartialStoreMap(ctx)
+	// export stakes
+	storeMap[string(model.LinoStakeStatSubStore)].Iterate(func(key []byte, val interface{}) bool {
+		day, err := strconv.ParseInt(string(key), 10, 64)
+		if err != nil {
+			panic(err)
+		}
+		stakeStats := val.(*model.LinoStakeStat)
+		rst = append(rst, *stakeStats)
+		days = append(days, day)
+		return false
+	})
+	return
+}
+
+
 func (gm *GlobalManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
 	state := &model.GlobalTablesIR{
 		Version: exportVersion,
@@ -487,54 +596,24 @@ func (gm *GlobalManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepat
 		if err != nil {
 			panic(err)
 		}
+		// skip coin return events
 		events := val.(*types.TimeEventList)
+		newEvents := make([]types.Event, 0)
+		for _, event := range events.Events {
+			switch v := event.(type) {
+			case types.ReturnCoinEvent:
+				ctx.Logger().Info(fmt.Sprintf("skip: %+v", v))
+			default:
+				newEvents = append(newEvents, event)
+			}
+		}
+		events.Events = newEvents
 		state.GlobalTimeEventLists = append(state.GlobalTimeEventLists, model.GlobalTimeEventsIR{
 			UnixTime:      ts,
 			TimeEventList: *events,
 		})
 		return false
 	})
-
-	// export stakes
-	storeMap[string(model.LinoStakeStatSubStore)].Iterate(func(key []byte, val interface{}) bool {
-		day, err := strconv.ParseInt(string(key), 10, 64)
-		if err != nil {
-			panic(err)
-		}
-		stakeStats := val.(*model.LinoStakeStat)
-		state.GlobalStakeStats = append(state.GlobalStakeStats, model.GlobalStakeStatDayIR{
-			Day:       day,
-			StakeStat: model.LinoStakeStatIR(*stakeStats),
-		})
-		return false
-	})
-
-	meta, err := gm.storage.GetGlobalMeta(ctx)
-	if err != nil {
-		return err
-	}
-	state.Meta = model.GlobalMetaIR(*meta)
-
-	pool, err := gm.storage.GetInflationPool(ctx)
-	if err != nil {
-		return err
-	}
-	state.InflationPool = model.InflationPoolIR{
-		DeveloperInflationPool: pool.DeveloperInflationPool,
-		ValidatorInflationPool: pool.ValidatorInflationPool,
-	}
-
-	consumption, err := gm.storage.GetConsumptionMeta(ctx)
-	if err != nil {
-		return err
-	}
-	state.ConsumptionMeta = model.ConsumptionMetaIR(*consumption)
-
-	tps, err := gm.storage.GetTPS(ctx)
-	if err != nil {
-		return err
-	}
-	state.TPS = model.TPSIR(*tps)
 
 	globalt, err := gm.storage.GetGlobalTime(ctx)
 	if err != nil {
@@ -546,66 +625,7 @@ func (gm *GlobalManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepat
 }
 
 func (gm *GlobalManager) ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
-	rst, err := utils.Load(filepath, cdc, func() interface{} { return &model.GlobalTablesIR{} })
-	if err != nil {
-		return err
-	}
-	table := rst.(*model.GlobalTablesIR)
-
-	if table.Version != importVersion {
-		return fmt.Errorf("unsupported import version: %d", table.Version)
-	}
-
-	// import events
-	for _, v := range table.GlobalTimeEventLists {
-		err := gm.storage.SetTimeEventList(ctx, v.UnixTime, &v.TimeEventList)
-		if err != nil {
-			return err
-		}
-	}
-
-	// import table.GlobalStakeStats
-	for _, v := range table.GlobalStakeStats {
-		stat := model.LinoStakeStat(v.StakeStat)
-		err := gm.storage.SetLinoStakeStat(ctx, v.Day, &stat)
-		if err != nil {
-			return err
-		}
-	}
-
-	meta := model.GlobalMeta(table.Meta)
-	err = gm.storage.SetGlobalMeta(ctx, &meta)
-	if err != nil {
-		return err
-	}
-
-	pool := model.InflationPool{
-		DeveloperInflationPool: table.InflationPool.DeveloperInflationPool,
-		ValidatorInflationPool: table.InflationPool.ValidatorInflationPool,
-	}
-	err = gm.storage.SetInflationPool(ctx, &pool)
-	if err != nil {
-		return err
-	}
-
-	consumption := model.ConsumptionMeta(table.ConsumptionMeta)
-	err = gm.storage.SetConsumptionMeta(ctx, &consumption)
-	if err != nil {
-		return err
-	}
-
-	tps := model.TPS(table.TPS)
-	err = gm.storage.SetTPS(ctx, &tps)
-	if err != nil {
-		return err
-	}
-
-	t := model.GlobalTime(table.Time)
-	err = gm.storage.SetGlobalTime(ctx, &t)
-	if err != nil {
-		return err
-	}
-
+	panic("???")
 	return nil
 }
 

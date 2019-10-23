@@ -23,7 +23,7 @@ type PostKeeper interface {
 	ExecRewardEvent(ctx sdk.Context, reward types.RewardEvent) sdk.Error
 
 	ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error
-	ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error
+	ExportToFile(ctx sdk.Context, cdc *codec.Codec, consumption linotypes.MiniDollar, filepath string) error
 }
 
 var _ PostKeeper = manager.PostManager{}

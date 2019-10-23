@@ -7,3 +7,11 @@ type Event interface{}
 type TimeEventList struct {
 	Events []Event `json:"events"`
 }
+
+// ReturnCoinEvent - return a certain amount of coin to an account
+type ReturnCoinEvent struct {
+	Username   AccountKey         `json:"username"`
+	Amount     Coin               `json:"amount"`
+	ReturnType TransferDetailType `json:"return_type"`
+}
+

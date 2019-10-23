@@ -13,6 +13,7 @@ import (
 	"github.com/lino-network/lino/types"
 	acc "github.com/lino-network/lino/x/account"
 	accmn "github.com/lino-network/lino/x/account/manager"
+	accmodel "github.com/lino-network/lino/x/account/model"
 	acctypes "github.com/lino-network/lino/x/account/types"
 	"github.com/lino-network/lino/x/auth"
 	bandwidth "github.com/lino-network/lino/x/bandwidth"
@@ -38,6 +39,7 @@ import (
 	valmn "github.com/lino-network/lino/x/validator/manager"
 	valtypes "github.com/lino-network/lino/x/validator/types"
 	vote "github.com/lino-network/lino/x/vote"
+	votemodel "github.com/lino-network/lino/x/vote/model"
 
 	wire "github.com/cosmos/cosmos-sdk/codec"
 	"github.com/tendermint/tendermint/libs/log"
@@ -49,6 +51,8 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 )
+
+var DLIVE = types.AccountKey("dlivetv")
 
 const (
 	appName = "LinoBlockchain"
@@ -446,9 +450,9 @@ func (lb *LinoBlockchain) executeEvents(ctx sdk.Context, eventList []types.Event
 				panic(err)
 			}
 		case accmn.ReturnCoinEvent:
-			if err := e.Execute(ctx, lb.accountManager.(accmn.AccountManager)); err != nil {
-				panic(err)
-			}
+			// if err := e.Execute(ctx, lb.accountManager.(accmn.AccountManager)); err != nil {
+			// 	panic(err)
+			// }
 		case proposal.DecideProposalEvent:
 			if err := e.Execute(
 				ctx, lb.voteManager, lb.valManager, lb.accountManager, lb.proposalManager,
@@ -568,24 +572,12 @@ type importExportModule struct {
 func (lb *LinoBlockchain) getImportExportModules() []importExportModule {
 	return []importExportModule{
 		{
-			module:   lb.accountManager,
-			filename: accountStateFile,
-		},
-		{
-			module:   lb.postManager,
-			filename: postStateFile,
-		},
-		{
 			module:   lb.developerManager,
 			filename: developerStateFile,
 		},
 		{
 			module:   &lb.globalManager,
 			filename: globalStateFile,
-		},
-		{
-			module:   lb.voteManager,
-			filename: voterStateFile,
 		},
 		{
 			module:   lb.valManager,
@@ -598,9 +590,139 @@ func (lb *LinoBlockchain) getImportExportModules() []importExportModule {
 	}
 }
 
+func (lb *LinoBlockchain) addPendingAmountAccounts(ctx sdk.Context) {
+	ongoings := lb.globalManager.OngoingCoinReturns(ctx)
+	for acc, amount := range ongoings {
+		err := lb.accountManager.AddCoinToUsername(ctx, acc, amount)
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
+func (lb *LinoBlockchain) convertToIDA(ctx sdk.Context) {
+	upper, err := types.LinoToCoin("10000000")
+	if err != nil {
+		panic(err)
+	}
+	left, err := types.LinoToCoin("0.9")
+	if err != nil {
+		panic(err)
+	}
+	whitelist := make(map[types.AccountKey]bool)
+	todos := make(map[types.AccountKey]types.Coin)
+	lb.accountManager.ItrAccounts(ctx, func(acc *accmodel.AccountInfo) {
+		if whitelist[acc.Username] {
+			return
+		}
+		bank, err := lb.accountManager.GetBank(ctx, acc.Username)
+		if err != nil {
+			panic(err)
+		}
+		// if > 10000000 lino but not white listed, panic
+		if bank.Saving.IsGTE(upper) {
+			panic(fmt.Sprintf("%+v, has %+v, too much", *acc, *bank))
+		}
+
+		if bank.Saving.IsGT(left) {
+			todos[acc.Username] = bank.Saving.Minus(left)
+		}
+	})
+
+	for user, amount := range todos {
+		err := lb.accountManager.MinusCoinFromUsername(ctx, user, amount)
+		if err != nil {
+			panic(err)
+		}
+		err = lb.accountManager.AddCoinToUsername(ctx, DLIVE, amount)
+		if err != nil {
+			panic(err)
+		}
+		err = lb.developerManager.MintIDA(ctx, DLIVE, amount)
+		if err != nil {
+			panic(err)
+		}
+		mndollar, err := lb.priceManager.CoinToMiniDollar(ctx, amount)
+		if err != nil {
+			panic(err)
+		}
+		err = lb.developerManager.MoveIDA(ctx, DLIVE, DLIVE, user, mndollar)
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
+func (lb *LinoBlockchain) exportSupply(ctx sdk.Context) accmodel.SupplyIR {
+	start, err := lb.globalManager.GetChainStartTime(ctx)
+	if err != nil {
+		panic(err)
+	}
+	// skip one inflation
+	last, err := lb.globalManager.GetLastBlockTime(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return accmodel.SupplyIR{
+		LastYearTotal:     types.NewCoinFromInt64(1000000000000000),
+		Total:             types.NewCoinFromInt64(1000000000000000), // was broken anyway
+		ChainStartTime:    start,
+		LastInflationTime: last,
+	}
+}
+
+func (lb *LinoBlockchain) exportPools(ctx sdk.Context) (rst []accmodel.PoolIR) {
+	rst = append(rst, accmodel.PoolIR{
+		Name:    types.InflationValidatorPool,
+		Balance: lb.globalManager.ValidatorInflationPool(ctx),
+	})
+	rst = append(rst, accmodel.PoolIR{
+		Name:    types.InflationDeveloperPool,
+		Balance: lb.globalManager.DevInflationPool(ctx),
+	})
+	rst = append(rst, accmodel.PoolIR{
+		Name:    types.InflationConsumptionPool,
+		Balance: lb.globalManager.CCInflationPool(ctx),
+	})
+	rst = append(rst, accmodel.PoolIR{
+		Name:    types.AccountVestingPool,
+		Balance: types.NewCoinFromInt64(0),
+	})
+	rst = append(rst, accmodel.PoolIR{
+		Name:    types.VoteStakeInPool,
+		Balance: lb.globalManager.StakeinPool(ctx),
+	})
+	rst = append(rst, accmodel.PoolIR{
+		Name:    types.VoteStakeReturnPool,
+		Balance: types.NewCoinFromInt64(0),
+	})
+	rst = append(rst, accmodel.PoolIR{
+		Name:    types.VoteFrictionPool,
+		Balance: lb.globalManager.FrictionPool(ctx),
+	})
+	reserve := lb.developerManager.GetReservePool(ctx)
+	rst = append(rst, accmodel.PoolIR{
+		Name:    types.DevIDAReservePool,
+		Balance: reserve.Total,
+	})
+	return
+}
+
+func (lb *LinoBlockchain) voteStateStats(ctx sdk.Context) (rst []votemodel.StakeStatDayIR) {
+	stats, days := lb.globalManager.StakeStats(ctx)
+	for i := 0; i < len(stats); i++ {
+		rst = append(rst, votemodel.StakeStatDayIR{
+			Day: days[i],
+			StakeStat: votemodel.LinoStakeStatIR(stats[i]),
+		})
+	}
+	return
+}
+
 // Custom logic for state export
 func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
 	ctx := lb.NewContext(true, abci.Header{})
+	ctx, _ = ctx.CacheContext()
 
 	exportPath := DefaultNodeHome + "/" + currStateFolder
 	err = os.MkdirAll(exportPath, os.ModePerm)
@@ -608,7 +730,46 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 		panic("failed to create export dir due to: " + err.Error())
 	}
 
+	// state changes
+	// account
+	// execute and remove all coin return events, direct to account.
+	lb.addPendingAmountAccounts(ctx)
+
+	// convert all balance of accounts to IDA, left 0.9 lino for each account
+	// for future transaction fees. expect for whitelisted accounts.
+	lb.convertToIDA(ctx)
+
 	var wg sync.WaitGroup
+
+	wg.Add(1)
+	go func() {
+		supply := lb.exportSupply(ctx)
+		pools := lb.exportPools(ctx)
+
+		err = lb.accountManager.ExportToFile(ctx, lb.cdc, pools, supply, exportPath+accountStateFile)
+		if err != nil {
+			panic(err)
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		stakestats := lb.voteStateStats(ctx)
+		err = lb.voteManager.ExportToFile(ctx, lb.cdc, stakestats, exportPath+voterStateFile)
+		if err != nil {
+			panic(err)
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		consumtionWindow := lb.globalManager.ConsumptionWindow(ctx)
+		err = lb.postManager.ExportToFile(ctx, lb.cdc, consumtionWindow, exportPath+postStateFile)
+		if err != nil {
+			panic(err)
+		}
+	}()
+
 	modules := lb.getImportExportModules()
 	for i := range modules {
 		wg.Add(1)

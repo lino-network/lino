@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	exportVersion = 1
+	exportVersion = 2
 	importVersion = 1
 )
 
@@ -346,7 +346,7 @@ func (pm PostManager) ExecRewardEvent(ctx sdk.Context, event types.RewardEvent) 
 }
 
 // Export - to file.
-func (pm PostManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
+func (pm PostManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, consumption linotypes.MiniDollar, filepath string) error {
 	state := &model.PostTablesIR{
 		Version: exportVersion,
 	}
@@ -361,6 +361,8 @@ func (pm PostManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath s
 		return false
 	})
 	state.Posts = posts
+
+	state.ConsumptionWindow = consumption
 
 	return utils.Save(filepath, cdc, state)
 }

@@ -7,6 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/x/global/model"
 )
 
 type GlobalKeeper interface {
@@ -27,6 +28,13 @@ type GlobalKeeper interface {
 	GetValidatorHourlyInflation(ctx sdk.Context) (types.Coin, sdk.Error)
 
 	// import export
+	ValidatorInflationPool(ctx sdk.Context) types.Coin
+	DevInflationPool(ctx sdk.Context) types.Coin
+	CCInflationPool(ctx sdk.Context) types.Coin
+	StakeinPool(ctx sdk.Context) types.Coin
+	StakeStats(ctx sdk.Context) (rst []model.LinoStakeStat, days []int64)
+	ConsumptionWindow(ctx sdk.Context) types.MiniDollar
+	FrictionPool(ctx sdk.Context) types.Coin
 	ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error
 	ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error
 }

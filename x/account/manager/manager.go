@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	exportVersion = 1
+	exportVersion = 2
 	importVersion = 1
 )
 
@@ -579,8 +579,20 @@ func (accManager AccountManager) GetAllGrantPubKeys(ctx sdk.Context, username li
 	return accManager.storage.GetAllGrantPermissions(ctx, username)
 }
 
+func (am AccountManager) ItrAccounts(ctx sdk.Context, cb func(acc *model.AccountInfo)) {
+	substores := am.storage.StoreMap(ctx)
+	// export accounts
+	substores[string(model.AccountInfoSubstore)].Iterate(func(key []byte, val interface{}) bool {
+		acc := val.(*model.AccountInfo)
+		cb(acc)
+		return false
+	})
+
+}
+
 // ExportToFile -
-func (accManager AccountManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
+func (accManager AccountManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec,
+	pools []model.PoolIR, supply model.SupplyIR, filepath string) error {
 	state := &model.AccountTablesIR{
 		Version: exportVersion,
 	}
@@ -597,14 +609,10 @@ func (accManager AccountManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec,
 	substores[string(model.AccountBankSubstore)].Iterate(func(key []byte, val interface{}) bool {
 		bank := val.(*model.AccountBank)
 		addr := key
-		frozens := make([]model.FrozenMoneyIR, len(bank.FrozenMoneyList))
-		for i, v := range bank.FrozenMoneyList {
-			frozens[i] = model.FrozenMoneyIR(v)
-		}
 		state.Banks = append(state.Banks, model.AccountBankIR{
 			Address:         addr,
 			Saving:          bank.Saving,
-			FrozenMoneyList: frozens,
+			FrozenMoneyList: nil, // skipped
 			PubKey:          bank.PubKey,
 			Sequence:        bank.Sequence,
 			Username:        bank.Username,
@@ -623,92 +631,13 @@ func (accManager AccountManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec,
 		return false
 	})
 
-	// export grants
-	substores[string(model.AccountGrantPubKeySubstore)].Iterate(
-		func(key []byte, val interface{}) bool {
-			grants := val.(*([]*model.GrantPermission))
-			acc, grantTo := model.ParseGrantKey(key)
-			permissions := make([]model.PermissionIR, 0)
-			for _, grant := range *grants {
-				permissions = append(permissions, model.PermissionIR{
-					Permission: grant.Permission,
-					CreatedAt:  grant.CreatedAt,
-					ExpiresAt:  grant.ExpiresAt,
-					Amount:     grant.Amount,
-				})
-			}
-			state.Grants = append(state.Grants, model.GrantPermissionIR{
-				Username:    acc,
-				GrantTo:     grantTo,
-				Permissions: permissions,
-			})
-			return false
-		})
-
+	state.Pools = pools
+	state.Supply = supply
 	return utils.Save(filepath, cdc, state)
 }
 
 // ImportFromFile import state from file.
 func (accManager AccountManager) ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
-	rst, err := utils.Load(filepath, cdc, func() interface{} { return &model.AccountTablesIR{} })
-	if err != nil {
-		return err
-	}
-	table := rst.(*model.AccountTablesIR)
-
-	if table.Version != importVersion {
-		return fmt.Errorf("unsupported import version: %d", table.Version)
-	}
-
-	banks := make(map[string]int)
-
-	// import accounts.
-	for _, v := range table.Accounts {
-		info := model.AccountInfo(v)
-		if _, err := accManager.storage.GetInfo(ctx, v.Username); err != nil {
-			accManager.storage.SetInfo(ctx, v.Username, &info)
-			if banks[string(v.Address)] != 0 {
-				panic(fmt.Errorf("used address: %s", v.Address))
-			}
-			banks[string(v.Address)] = 1
-		} else {
-			panic(fmt.Errorf("duplicated username: %s", v.Username))
-		}
-	}
-
-	// import banks
-	for _, v := range table.Banks {
-		frozens := make([]model.FrozenMoney, 0)
-		for _, f := range v.FrozenMoneyList {
-			frozens = append(frozens, model.FrozenMoney(f))
-		}
-		bank := model.AccountBank{
-			Saving:          v.Saving,
-			FrozenMoneyList: frozens,
-			PubKey:          v.PubKey,
-			Sequence:        v.Sequence,
-			Username:        v.Username,
-		}
-		if banks[string(v.Address)] > 1 {
-			panic(fmt.Errorf("duplicated address: %+v", v))
-		}
-		banks[string(v.Address)] = 2
-		accManager.storage.SetBank(ctx, sdk.AccAddress(v.Address), &bank)
-	}
-
-	// import grant permissions.
-	for _, v := range table.Grants {
-		perms := make([]*model.GrantPermission, 0)
-		for _, p := range v.Permissions {
-			perms = append(perms, &model.GrantPermission{
-				GrantTo:    v.GrantTo,
-				Permission: p.Permission,
-				CreatedAt:  p.CreatedAt,
-				ExpiresAt:  p.ExpiresAt,
-				Amount:     p.Amount,
-			})
-		}
-		accManager.storage.SetGrantPermissions(ctx, v.Username, v.GrantTo, perms)
-	}
+	panic("broken")
 	return nil
 }
