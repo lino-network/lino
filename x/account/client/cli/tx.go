@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -16,9 +17,11 @@ import (
 )
 
 const (
-	FlagTo     = "to"
-	FlagAmount = "amount"
-	FlagMemo   = "memo"
+	FlagTo      = "to"
+	FlagAmount  = "amount"
+	FlagMemo    = "memo"
+	FlagByAddr  = "by-addr"
+	FlagAddrSeq = "addr-seq"
 )
 
 func GetTxCmd(cdc *codec.Codec) *cobra.Command {
@@ -31,7 +34,7 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 	}
 
 	cmd.AddCommand(client.PostCommands(
-		GetCmdRegister(cdc),
+		// GetCmdRegister(cdc),
 		GetCmdTransfer(cdc),
 	)...)
 
@@ -42,37 +45,53 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 func GetCmdRegister(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "register <referrer> <amount> <name>",
-		Short: "register <referrer> <amount> <name>",
+		Short: "register <referrer> <amount> <name> --by-addr=true/false",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := client.NewCoreContextFromViper().WithTxEncoder(linotypes.TxEncoder(cdc))
-			referrer := linotypes.AccountKey(args[0])
+			referrerArg := args[0]
 			amount := args[1]
 			username := linotypes.AccountKey(args[2])
 
-			resetPriv := secp256k1.GenPrivKey()
-			transactionPriv := secp256k1.GenPrivKey()
+			txPriv := secp256k1.GenPrivKey()
+			signPriv := secp256k1.GenPrivKey()
 
 			fmt.Println(
-				"reset private key is:",
-				strings.ToUpper(hex.EncodeToString(resetPriv.Bytes())))
+				"tx private hex-encoded:",
+				strings.ToUpper(hex.EncodeToString(txPriv.Bytes())))
 			fmt.Println(
-				"transaction private key is:",
-				strings.ToUpper(hex.EncodeToString(transactionPriv.Bytes())))
+				"signing private key hex-encoded:",
+				strings.ToUpper(hex.EncodeToString(signPriv.Bytes())))
+			isAddr := viper.GetBool(FlagByAddr)
+			var referrer linotypes.AccOrAddr
+			if isAddr {
+				referrer = linotypes.NewAccOrAddrFromAcc(linotypes.AccountKey(referrerArg))
+			} else {
+				referrer = linotypes.NewAccOrAddrFromAddr(sdk.AccAddress(referrerArg))
+			}
 
-			msg := types.RegisterMsg{
+			msg := types.RegisterV2Msg{
 				Referrer:             referrer,
 				NewUser:              username,
 				RegisterFee:          amount,
-				NewResetPubKey:       resetPriv.PubKey(),
-				NewTransactionPubKey: transactionPriv.PubKey(),
-				NewAppPubKey:         transactionPriv.PubKey(),
+				NewTransactionPubKey: txPriv.PubKey(),
+				NewSigningPubKey:     signPriv.PubKey(),
 			}
-			return ctx.DoTxPrintResponse(msg)
+			return ctx.DoTxPrintResponse(msg, client.OptionalSigner{
+				PrivKey: txPriv,
+				Seq:     0,
+			})
 		},
 	}
+
+	cmd.Flags().Bool(FlagByAddr, false, "register referrer is an address")
+	// always 0, in this cmd.
+	// cmd.Flags().Uint64(FlagAddrSeq, 0, "sequence# of the new transaction key")
 	return cmd
 }
+
+// TODO(yumin):
+// Add an addition CLI to support register an account for an existing address.
 
 // GetCmdTransfer -
 func GetCmdTransfer(cdc *codec.Codec) *cobra.Command {

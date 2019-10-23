@@ -28,14 +28,14 @@ func TestVoterRevoke(t *testing.T) {
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal, baseT)
 
 	test.CreateAccount(t, newAccountName, lb, 0,
-		secp256k1.GenPrivKey(), newAccountTransactionPriv, secp256k1.GenPrivKey(), "500000")
+		secp256k1.GenPrivKey(), newAccountTransactionPriv, "500000")
 	test.CreateAccount(t, delegator1Name, lb, 1,
-		secp256k1.GenPrivKey(), delegator1TransactionPriv, secp256k1.GenPrivKey(), "210100")
+		secp256k1.GenPrivKey(), delegator1TransactionPriv, "210100")
 	test.CreateAccount(t, delegator2Name, lb, 2,
-		secp256k1.GenPrivKey(), delegator2TransactionPriv, secp256k1.GenPrivKey(), "70100")
+		secp256k1.GenPrivKey(), delegator2TransactionPriv, "70100")
 
 	voteDepositMsg := types.NewStakeInMsg(newAccountName, linotypes.LNO("300000"))
-	test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountTransactionPriv, baseTime)
+	test.SignCheckDeliver(t, lb, voteDepositMsg, 1, true, newAccountTransactionPriv, baseTime)
 
 	// valDepositMsg := val.NewValidatorDepositMsg(
 	// 	newAccountName, linotypes.LNO("150000"), newValidatorPriv.PubKey(), "")

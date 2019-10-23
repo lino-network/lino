@@ -21,7 +21,7 @@ func TestTransferToAccount(t *testing.T) {
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal, baseT)
 
 	test.CreateAccount(t, newAccountName, lb, 0,
-		secp256k1.GenPrivKey(), secp256k1.GenPrivKey(), secp256k1.GenPrivKey(), "100")
+		secp256k1.GenPrivKey(), secp256k1.GenPrivKey(), "100")
 
 	transferMsg := acctypes.NewTransferMsg(
 		test.GenesisUser, newAccountName, types.LNO("200"), "")
@@ -46,9 +46,9 @@ func TestTransferToAddress(t *testing.T) {
 	receiverPriv := secp256k1.GenPrivKey()
 
 	test.CreateAccount(t, newAccountName, lb, 0,
-		senderPriv, secp256k1.GenPrivKey(), secp256k1.GenPrivKey(), "100")
+		senderPriv, secp256k1.GenPrivKey(), "100")
 	test.CreateAccount(t, newReceiver, lb, 1,
-		receiverPriv, secp256k1.GenPrivKey(), secp256k1.GenPrivKey(), "100")
+		receiverPriv, secp256k1.GenPrivKey(), "100")
 
 	// user -> address
 	transferMsg := acctypes.NewTransferV2Msg(
@@ -66,7 +66,7 @@ func TestTransferToAddress(t *testing.T) {
 		types.NewAccOrAddrFromAddr(sdk.AccAddress(senderPriv.PubKey().Address())),
 		types.NewAccOrAddrFromAddr(sdk.AccAddress(receiverPriv.PubKey().Address())),
 		types.LNO("100"), "")
-	test.SignCheckDeliver(t, lb, transferMsg, 0, true, senderPriv, baseTime)
+	test.SignCheckDeliver(t, lb, transferMsg, 1, true, senderPriv, baseTime)
 
 	test.CheckBalance(t, newAccountName, lb, types.NewCoinFromInt64(199*types.Decimals))
 	test.CheckBalance(t, newReceiver, lb, types.NewCoinFromInt64(199*types.Decimals))
@@ -76,7 +76,7 @@ func TestTransferToAddress(t *testing.T) {
 		types.NewAccOrAddrFromAddr(sdk.AccAddress(senderPriv.PubKey().Address())),
 		types.NewAccOrAddrFromAcc(types.AccountKey(newReceiver)),
 		types.LNO("100"), "")
-	test.SignCheckDeliver(t, lb, transferMsg, 1, true, senderPriv, baseTime)
+	test.SignCheckDeliver(t, lb, transferMsg, 2, true, senderPriv, baseTime)
 
 	test.CheckBalance(t, newAccountName, lb, types.NewCoinFromInt64(99*types.Decimals))
 	test.CheckBalance(t, newReceiver, lb, types.NewCoinFromInt64(299*types.Decimals))

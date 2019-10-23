@@ -18,7 +18,6 @@ import (
 // test validator deposit
 func TestValidatorRegister(t *testing.T) {
 	newAccountTransactionPriv := secp256k1.GenPrivKey()
-	newAccountAppPriv := secp256k1.GenPrivKey()
 	newAccountName := "newuser"
 	newValidatorPriv := secp256k1.GenPrivKey()
 
@@ -27,19 +26,19 @@ func TestValidatorRegister(t *testing.T) {
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal, baseT)
 
 	test.CreateAccount(t, newAccountName, lb, 0,
-		secp256k1.GenPrivKey(), newAccountTransactionPriv, newAccountAppPriv, "500000")
+		secp256k1.GenPrivKey(), newAccountTransactionPriv, "500000")
 
 	voteDepositMsg := types.NewStakeInMsg(newAccountName, linotypes.LNO("150000"))
-	test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountTransactionPriv, baseTime)
+	test.SignCheckDeliver(t, lb, voteDepositMsg, 1, true, newAccountTransactionPriv, baseTime)
 
 	// deposit the lowest requirement
 	valDepositMsg := valtypes.NewValidatorRegisterMsg(
 		newAccountName, newValidatorPriv.PubKey(), "")
-	test.SignCheckDeliver(t, lb, valDepositMsg, 1, false, newAccountTransactionPriv, baseTime)
+	test.SignCheckDeliver(t, lb, valDepositMsg, 2, false, newAccountTransactionPriv, baseTime)
 	test.CheckOncallValidatorList(t, newAccountName, false, lb)
 
-	test.SignCheckDeliver(t, lb, voteDepositMsg, 2, true, newAccountTransactionPriv, baseTime)
-	test.SignCheckDeliver(t, lb, valDepositMsg, 3, true, newAccountTransactionPriv, baseTime)
+	test.SignCheckDeliver(t, lb, voteDepositMsg, 3, true, newAccountTransactionPriv, baseTime)
+	test.SignCheckDeliver(t, lb, valDepositMsg, 4, true, newAccountTransactionPriv, baseTime)
 	test.CheckOncallValidatorList(t, newAccountName, true, lb)
 
 }
@@ -57,7 +56,6 @@ func TestRegisterValidatorOneByOne(t *testing.T) {
 	for ; seq < test.DefaultNumOfVal-1; seq++ {
 		newAccountResetPriv := secp256k1.GenPrivKey()
 		newAccountTransactionPriv := secp256k1.GenPrivKey()
-		newAccountAppPriv := secp256k1.GenPrivKey()
 
 		newValidatorPriv := secp256k1.GenPrivKey()
 
@@ -65,13 +63,13 @@ func TestRegisterValidatorOneByOne(t *testing.T) {
 		newAccountName += strconv.Itoa(seq + 1)
 
 		test.CreateAccount(t, newAccountName, lb, uint64(seq),
-			newAccountResetPriv, newAccountTransactionPriv, newAccountAppPriv, "500000")
+			newAccountResetPriv, newAccountTransactionPriv, "500000")
 
 		voteDepositMsg := types.NewStakeInMsg(newAccountName, strconv.Itoa(300000+100*seq))
-		test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountTransactionPriv, baseTime)
+		test.SignCheckDeliver(t, lb, voteDepositMsg, 1, true, newAccountTransactionPriv, baseTime)
 
 		valDepositMsg := valtypes.NewValidatorRegisterMsg(newAccountName, newValidatorPriv.PubKey(), "")
-		test.SignCheckDeliver(t, lb, valDepositMsg, 1, true, newAccountTransactionPriv, baseTime)
+		test.SignCheckDeliver(t, lb, valDepositMsg, 2, true, newAccountTransactionPriv, baseTime)
 		test.CheckOncallValidatorList(t, newAccountName, true, lb)
 	}
 
@@ -86,20 +84,19 @@ func TestRegisterValidatorOneByOne(t *testing.T) {
 	// register more validators, but will not be oncall
 	newAccountResetPriv := secp256k1.GenPrivKey()
 	newAccountTransactionPriv := secp256k1.GenPrivKey()
-	newAccountAppPriv := secp256k1.GenPrivKey()
 
 	newValidatorPriv := secp256k1.GenPrivKey()
 
 	newAccountName := "validatorx"
 	test.CreateAccount(t, newAccountName, lb, uint64(seq),
-		newAccountResetPriv, newAccountTransactionPriv, newAccountAppPriv, "500000")
+		newAccountResetPriv, newAccountTransactionPriv, "500000")
 
 	voteDepositMsg := types.NewStakeInMsg(newAccountName, linotypes.LNO("200000"))
-	test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountTransactionPriv, baseTime)
+	test.SignCheckDeliver(t, lb, voteDepositMsg, 1, true, newAccountTransactionPriv, baseTime)
 
 	valDepositMsg := valtypes.NewValidatorRegisterMsg(
 		newAccountName, newValidatorPriv.PubKey(), "")
-	test.SignCheckDeliver(t, lb, valDepositMsg, 1, true, newAccountTransactionPriv, baseTime)
+	test.SignCheckDeliver(t, lb, valDepositMsg, 2, true, newAccountTransactionPriv, baseTime)
 
 	test.CheckOncallValidatorList(t, newAccountName, false, lb)
 	test.CheckStandbyValidatorList(t, newAccountName, true, lb)
@@ -107,7 +104,7 @@ func TestRegisterValidatorOneByOne(t *testing.T) {
 	// the 22nd validator will be oncall by depositing more money,
 	// validator0 will be removed from oncall
 
-	test.SignCheckDeliver(t, lb, voteDepositMsg, 2, true, newAccountTransactionPriv, baseTime)
+	test.SignCheckDeliver(t, lb, voteDepositMsg, 3, true, newAccountTransactionPriv, baseTime)
 	test.CheckOncallValidatorList(t, newAccountName, true, lb)
 
 	test.CheckOncallValidatorList(t, "validator0", false, lb)
@@ -124,20 +121,19 @@ func TestRemoveTheSameLowestDepositValidator(t *testing.T) {
 	// Add a new validator who has higher deposit
 	newAccountResetPriv := secp256k1.GenPrivKey()
 	newAccountTransactionPriv := secp256k1.GenPrivKey()
-	newAccountAppPriv := secp256k1.GenPrivKey()
 
 	newValidatorPriv := secp256k1.GenPrivKey()
 
 	newAccountName := "validatorx"
 
 	test.CreateAccount(t, newAccountName, lb, 0,
-		newAccountResetPriv, newAccountTransactionPriv, newAccountAppPriv, "500000")
+		newAccountResetPriv, newAccountTransactionPriv, "500000")
 
 	voteDepositMsg := types.NewStakeInMsg(newAccountName, linotypes.LNO("300000"))
-	test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountTransactionPriv, baseTime)
+	test.SignCheckDeliver(t, lb, voteDepositMsg, 1, true, newAccountTransactionPriv, baseTime)
 
 	valDepositMsg := valtypes.NewValidatorRegisterMsg(newAccountName, newValidatorPriv.PubKey(), "")
-	test.SignCheckDeliver(t, lb, valDepositMsg, 1, true, newAccountTransactionPriv, baseTime)
+	test.SignCheckDeliver(t, lb, valDepositMsg, 2, true, newAccountTransactionPriv, baseTime)
 	test.CheckOncallValidatorList(t, newAccountName, true, lb)
 
 	// check removed oncall validator
@@ -243,7 +239,6 @@ func TestFireIncompetentValidator2(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		newAccountResetPriv := secp256k1.GenPrivKey()
 		newAccountTransactionPriv := secp256k1.GenPrivKey()
-		newAccountAppPriv := secp256k1.GenPrivKey()
 
 		newValidatorPriv := secp256k1.GenPrivKey()
 
@@ -251,13 +246,13 @@ func TestFireIncompetentValidator2(t *testing.T) {
 		newAccountName += strconv.Itoa(i)
 
 		test.CreateAccount(t, newAccountName, lb, uint64(i),
-			newAccountResetPriv, newAccountTransactionPriv, newAccountAppPriv, "500000")
+			newAccountResetPriv, newAccountTransactionPriv, "500000")
 
 		voteDepositMsg := types.NewStakeInMsg(newAccountName, linotypes.LNO("200000"))
-		test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountTransactionPriv, baseTime)
+		test.SignCheckDeliver(t, lb, voteDepositMsg, 1, true, newAccountTransactionPriv, baseTime)
 
 		valDepositMsg := valtypes.NewValidatorRegisterMsg(newAccountName, newValidatorPriv.PubKey(), "")
-		test.SignCheckDeliver(t, lb, valDepositMsg, 1, true, newAccountTransactionPriv, baseTime)
+		test.SignCheckDeliver(t, lb, valDepositMsg, 2, true, newAccountTransactionPriv, baseTime)
 
 		test.CheckOncallValidatorList(t, newAccountName, false, lb)
 		test.CheckStandbyValidatorList(t, newAccountName, true, lb)

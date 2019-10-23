@@ -167,87 +167,51 @@ func TestUpdateAccountMsg(t *testing.T) {
 
 func TestRegisterUsername(t *testing.T) {
 	testCases := map[string]struct {
-		msg      RegisterMsg
 		msgv2    RegisterV2Msg
 		wantCode sdk.CodeType
 	}{
 		"normal case": {
-			msg: NewRegisterMsg("referrer", "newuser", "1", secp256k1.GenPrivKey().PubKey(),
-				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
-			),
 			msgv2: NewRegisterV2Msg(types.NewAccOrAddrFromAcc("referrer"), "newuser", "1",
 				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
 			),
 			wantCode: sdk.CodeOK,
 		},
 		"normal case with dot": {
-			msg: NewRegisterMsg("zhimao.liu", "newuser", "1", secp256k1.GenPrivKey().PubKey(),
-				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
-			),
 			msgv2: NewRegisterV2Msg(types.NewAccOrAddrFromAcc("zhimao.liu"), "newuser", "1",
 				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
 			),
 			wantCode: sdk.CodeOK,
 		},
 		"register username minimum length": {
-			msg: NewRegisterMsg("referrer", "new", "1", secp256k1.GenPrivKey().PubKey(),
-				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
-			),
 			msgv2: NewRegisterV2Msg(types.NewAccOrAddrFromAcc("referrer"), "new", "1",
 				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
 			),
 			wantCode: sdk.CodeOK,
 		},
 		"register username maximum length": {
-			msg: NewRegisterMsg("referrer", "newnewnewnewnewnewne", "1", secp256k1.GenPrivKey().PubKey(),
-				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
-			),
 			msgv2: NewRegisterV2Msg(types.NewAccOrAddrFromAcc("referrer"), "newnewnewnewnewnewne", "1",
 				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
 			),
 			wantCode: sdk.CodeOK,
 		},
 		"register username length exceeds requirement": {
-			msg: NewRegisterMsg("referrer", "newnewnewnewnewnewnew", "1", secp256k1.GenPrivKey().PubKey(),
-				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
-			),
 			msgv2: NewRegisterV2Msg(types.NewAccOrAddrFromAcc("referrer"), "newnewnewnewnewnewnew", "1",
 				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
 			),
 			wantCode: types.CodeInvalidUsername,
 		},
 		"register username length doesn't meet requirement": {
-			msg: NewRegisterMsg("referrer", "ne", "1", secp256k1.GenPrivKey().PubKey(),
-				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
-			),
 			msgv2: NewRegisterV2Msg(types.NewAccOrAddrFromAcc("referrer"), "ne", "1",
 				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
 			),
 			wantCode: types.CodeInvalidUsername,
 		},
 		"register fee invalid": {
-			msg: NewRegisterMsg("newuser", "newuser", "1.", secp256k1.GenPrivKey().PubKey(),
-				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
-			),
 			msgv2: NewRegisterV2Msg(types.NewAccOrAddrFromAcc("newuser"), "newuser", "1.",
 				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey(),
 			),
 			wantCode: types.CodeInvalidCoins,
 		},
-	}
-
-	for testName, tc := range testCases {
-		got := tc.msg.ValidateBasic()
-
-		if got == nil {
-			if tc.wantCode != sdk.CodeOK {
-				t.Errorf("%s: diff error: got %v, want %v", testName, sdk.CodeOK, tc.wantCode)
-			}
-			continue
-		}
-		if got.Code() != tc.wantCode {
-			t.Errorf("%s: diff errorCode: got %v, want %v", testName, got.Code(), tc.wantCode)
-		}
 	}
 
 	for testName, tc := range testCases {
@@ -270,14 +234,9 @@ func TestRegisterUsername(t *testing.T) {
 		"reg=ister", "register^", "register.", "reg$ister,", "Register", "r__egister", "reGister",
 		"r_--gister", "re.-gister", ".re-gister", "re-gister.", "register_", "register-", "a.2.2.-.-..2"}
 	for _, register := range registerList {
-		msg := NewRegisterMsg(
-			"referer", register, "1", secp256k1.GenPrivKey().PubKey(),
-			secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey())
-		result := msg.ValidateBasic()
-		assert.Equal(t, ErrInvalidUsername("illegal username"), result, "%s", register)
 		msgv2 := NewRegisterV2Msg(
 			types.NewAccOrAddrFromAcc("referer"), register, "1", secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey())
-		result = msgv2.ValidateBasic()
+		result := msgv2.ValidateBasic()
 		assert.Equal(t, ErrInvalidUsername(register), result, "%s", register)
 	}
 }
@@ -294,11 +253,6 @@ func TestMsgPermission(t *testing.T) {
 		"recover": {
 			msg: NewRecoverMsg(
 				"userA", secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey()),
-			expectPermission: types.TransactionPermission,
-		},
-		"register msg": {
-			msg: NewRegisterMsg("referrer", "test", "0", secp256k1.GenPrivKey().PubKey(),
-				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey()),
 			expectPermission: types.TransactionPermission,
 		},
 		"update msg": {
@@ -328,10 +282,6 @@ func TestGetSignBytes(t *testing.T) {
 				"userA",
 				secp256k1.GenPrivKey().PubKey(),
 				secp256k1.GenPrivKey().PubKey()),
-		},
-		"register msg with public key type Secp256k1": {
-			msg: NewRegisterMsg("referrer", "test", "0", secp256k1.GenPrivKey().PubKey(),
-				secp256k1.GenPrivKey().PubKey(), secp256k1.GenPrivKey().PubKey()),
 		},
 		"update msg": {
 			msg: NewUpdateAccountMsg("user", "{'test':'test'}"),
@@ -367,12 +317,6 @@ func TestGetSigners(t *testing.T) {
 				privKey.PubKey(),
 				secp256k1.GenPrivKey().PubKey()),
 			expectSigners: []types.AccountKey{"userA", types.AccountKey(privKey.PubKey().Address())},
-		},
-		"register msg with public key type Secp256k1": {
-			msg: NewRegisterMsg("referrer", "test", "0", secp256k1.GenPrivKey().PubKey(),
-				secp256k1.GenPrivKey().PubKey(),
-				secp256k1.GenPrivKey().PubKey()),
-			expectSigners: []types.AccountKey{"referrer"},
 		},
 		"update msg": {
 			msg:           NewUpdateAccountMsg("user", "{'test':'test'}"),

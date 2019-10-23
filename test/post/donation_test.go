@@ -15,7 +15,6 @@ import (
 // test donate to a normal post
 func TestNormalDonation(t *testing.T) {
 	newPostUserTransactionPriv := secp256k1.GenPrivKey()
-	newPostUserAppPriv := secp256k1.GenPrivKey()
 	newPostUser := "poster"
 	postID := "New Post"
 
@@ -26,12 +25,12 @@ func TestNormalDonation(t *testing.T) {
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal, baseT)
 
 	test.CreateAccount(t, newPostUser, lb, 0,
-		secp256k1.GenPrivKey(), newPostUserTransactionPriv, newPostUserAppPriv, "100")
+		secp256k1.GenPrivKey(), newPostUserTransactionPriv, "100")
 	test.CreateAccount(t, newDonateUser, lb, 1,
-		secp256k1.GenPrivKey(), newDonateUserTransactionPriv, secp256k1.GenPrivKey(), "100")
+		secp256k1.GenPrivKey(), newDonateUserTransactionPriv, "100")
 
 	test.CreateTestPost(
-		t, lb, newPostUser, postID, 0, newPostUserTransactionPriv, baseTime)
+		t, lb, newPostUser, postID, 1, newPostUserTransactionPriv, baseTime)
 
 	test.CheckBalance(t, newPostUser, lb, types.NewCoinFromInt64(99*types.Decimals))
 	test.CheckBalance(t, newDonateUser, lb, types.NewCoinFromInt64(99*types.Decimals))
@@ -39,7 +38,7 @@ func TestNormalDonation(t *testing.T) {
 	donateMsg := post.NewDonateMsg(
 		newDonateUser, types.LNO("50"), newPostUser, postID, "", "")
 
-	test.SignCheckDeliver(t, lb, donateMsg, 0, true, newDonateUserTransactionPriv, baseTime)
+	test.SignCheckDeliver(t, lb, donateMsg, 1, true, newDonateUserTransactionPriv, baseTime)
 
 	test.CheckBalance(t, newDonateUser, lb, types.NewCoinFromInt64(49*types.Decimals))
 	test.CheckBalance(t, newPostUser, lb, types.NewCoinFromInt64(9900000+4505000)) // 90.1% * 50
