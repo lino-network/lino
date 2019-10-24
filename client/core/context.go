@@ -19,7 +19,7 @@ type CoreContext struct {
 	Memo            string
 	Offline         bool
 	Client          rpcclient.Client
-	PrivKeys        []crypto.PrivKey
+	PrivKey         crypto.PrivKey
 	Fees            sdk.Coins
 	TxEncoder       sdk.TxEncoder
 }
@@ -68,7 +68,7 @@ func (c CoreContext) WithClient(client rpcclient.Client) CoreContext {
 
 // WithPrivKey - mount private key on context
 func (c CoreContext) WithPrivKey(privKey crypto.PrivKey) CoreContext {
-	c.PrivKeys = append(c.PrivKeys, privKey)
+	c.PrivKey = privKey
 	return c
 }
 

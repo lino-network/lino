@@ -202,11 +202,10 @@ func (vm ValidatorManager) VoteValidator(ctx sdk.Context, username linotypes.Acc
 }
 
 func (vm ValidatorManager) DistributeInflationToValidator(ctx sdk.Context) sdk.Error {
-	coin, err := vm.global.GetValidatorHourlyInflation(ctx)
+	coin, err := vm.acc.GetPool(ctx, linotypes.InflationValidatorPool)
 	if err != nil {
 		return err
 	}
-
 	param := vm.paramHolder.GetValidatorParam(ctx)
 	lst := vm.storage.GetValidatorList(ctx)
 	totalWeight := int64(len(lst.Oncall))*param.OncallInflationWeight +
@@ -215,7 +214,9 @@ func (vm ValidatorManager) DistributeInflationToValidator(ctx sdk.Context) sdk.E
 	// give inflation to each validator according it's weight
 	for _, oncall := range lst.Oncall {
 		ratPerOncall := coin.ToDec().Mul(sdk.NewDec(param.OncallInflationWeight)).Quo(sdk.NewDec(totalWeight - index))
-		err := vm.acc.AddCoinToUsername(ctx, oncall, linotypes.DecToCoin(ratPerOncall))
+		err := vm.acc.MoveFromPool(ctx, linotypes.InflationValidatorPool,
+			linotypes.NewAccOrAddrFromAcc(oncall),
+			linotypes.DecToCoin(ratPerOncall))
 		if err != nil {
 			return err
 		}
@@ -225,7 +226,9 @@ func (vm ValidatorManager) DistributeInflationToValidator(ctx sdk.Context) sdk.E
 
 	for _, standby := range lst.Standby {
 		ratPerStandby := coin.ToDec().Mul(sdk.NewDec(param.StandbyInflationWeight)).Quo(sdk.NewDec(totalWeight - index))
-		err := vm.acc.AddCoinToUsername(ctx, standby, linotypes.DecToCoin(ratPerStandby))
+		err := vm.acc.MoveFromPool(ctx, linotypes.InflationValidatorPool,
+			linotypes.NewAccOrAddrFromAcc(standby),
+			linotypes.DecToCoin(ratPerStandby))
 		if err != nil {
 			return err
 		}
@@ -311,8 +314,8 @@ func (vm ValidatorManager) getElectionVoteListUpdates(ctx sdk.Context, username 
 }
 
 func (vm ValidatorManager) updateValidatorReceivedVotes(ctx sdk.Context, updates []*model.ElectionVote) sdk.Error {
-	lst := vm.storage.GetValidatorList(ctx)
 	for _, update := range updates {
+		lst := vm.storage.GetValidatorList(ctx)
 		if update.Vote.IsZero() {
 			continue
 		}
@@ -483,11 +486,8 @@ func (vm ValidatorManager) updateSigningStats(ctx sdk.Context, voteInfos []abci.
 func (vm ValidatorManager) PunishCommittingValidator(ctx sdk.Context, username linotypes.AccountKey,
 	penalty linotypes.Coin, punishType linotypes.PunishType) sdk.Error {
 	// slash and add slashed coin back into validator inflation pool
-	actualPenalty, err := vm.vote.SlashStake(ctx, username, penalty)
+	_, err := vm.vote.SlashStake(ctx, username, penalty, linotypes.InflationValidatorPool)
 	if err != nil {
-		return err
-	}
-	if err := vm.global.AddToValidatorInflationPool(ctx, actualPenalty); err != nil {
 		return err
 	}
 	validator, err := vm.storage.GetValidator(ctx, username)

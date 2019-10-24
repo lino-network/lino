@@ -80,3 +80,11 @@ func (suite *postStoreTestSuite) TestPostGetSetHas() {
 	suite.Nil(err)
 	suite.Equal(postInfo1, rst1)
 }
+
+func (suite *postStoreTestSuite) TestConsumptionWIndowGetSet() {
+	suite.ps.SetConsumptionWindow(suite.ctx, linotypes.NewMiniDollar(1000))
+	suite.Equal(linotypes.NewMiniDollar(1000), suite.ps.GetConsumptionWindow(suite.ctx))
+
+	suite.ps.SetConsumptionWindow(suite.ctx, linotypes.NewMiniDollar(2000))
+	suite.Equal(linotypes.NewMiniDollar(2000), suite.ps.GetConsumptionWindow(suite.ctx))
+}

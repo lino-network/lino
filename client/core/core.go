@@ -64,13 +64,18 @@ func (ctx CoreContext) query(key cmn.HexBytes, storeName, endPath string) (res [
 	return resp.Value, nil
 }
 
-func (ctx CoreContext) DoTxPrintResponse(msg sdk.Msg) error {
+type OptionalSigner struct {
+	PrivKey crypto.PrivKey
+	Seq     uint64
+}
+
+func (ctx CoreContext) DoTxPrintResponse(msg sdk.Msg, optionalSigners ...OptionalSigner) error {
 	if err := msg.ValidateBasic(); err != nil {
 		return err
 	}
 
 	if ctx.Offline {
-		tx, err := ctx.BuildAndSign([]sdk.Msg{msg})
+		tx, err := ctx.BuildAndSign([]sdk.Msg{msg}, optionalSigners...)
 		if err != nil {
 			return err
 		}
@@ -82,7 +87,7 @@ func (ctx CoreContext) DoTxPrintResponse(msg sdk.Msg) error {
 	}
 
 	// build and sign the transaction, then broadcast to Tendermint
-	res, signErr := ctx.SignBuildBroadcast([]sdk.Msg{msg})
+	res, signErr := ctx.SignBuildBroadcast([]sdk.Msg{msg}, optionalSigners...)
 	if signErr != nil {
 		return signErr
 	}
@@ -92,8 +97,8 @@ func (ctx CoreContext) DoTxPrintResponse(msg sdk.Msg) error {
 }
 
 // sign and build the transaction from the msg
-func (ctx CoreContext) SignBuildBroadcast(msgs []sdk.Msg) (sdk.TxResponse, error) {
-	txBytes, err := ctx.BuildAndSign(msgs)
+func (ctx CoreContext) SignBuildBroadcast(msgs []sdk.Msg, optionalSigners ...OptionalSigner) (sdk.TxResponse, error) {
+	txBytes, err := ctx.BuildAndSign(msgs, optionalSigners...)
 	if err != nil {
 		return sdk.TxResponse{}, err
 	}
@@ -117,10 +122,10 @@ func MakeSignature(msg authtypes.StdSignMsg, pk crypto.PrivKey) (sig authtypes.S
 	return sig, err
 }
 
-func (ctx CoreContext) Sign(msg authtypes.StdSignMsg) ([]byte, error) {
+func (ctx CoreContext) Sign(msg []authtypes.StdSignMsg, keys []crypto.PrivKey) ([]byte, error) {
 	sigs := make([]authtypes.StdSignature, 0)
-	for _, pk := range ctx.PrivKeys {
-		sig, err := MakeSignature(msg, pk)
+	for i, pk := range keys {
+		sig, err := MakeSignature(msg[i], pk)
 		if err != nil {
 			return nil, err
 		}
@@ -128,10 +133,10 @@ func (ctx CoreContext) Sign(msg authtypes.StdSignMsg) ([]byte, error) {
 	}
 
 	return ctx.TxEncoder(
-		authtypes.NewStdTx(msg.Msgs, msg.Fee, sigs, msg.Memo))
+		authtypes.NewStdTx(msg[0].Msgs, msg[0].Fee, sigs, msg[0].Memo))
 }
 
-func (ctx CoreContext) BuildSignMsg(msgs []sdk.Msg) (authtypes.StdSignMsg, error) {
+func (ctx CoreContext) BuildSignMsg(msgs []sdk.Msg, seq uint64) (authtypes.StdSignMsg, error) {
 	if ctx.ChainID == "" {
 		return authtypes.StdSignMsg{}, fmt.Errorf("chain ID required but not specified")
 	}
@@ -139,20 +144,30 @@ func (ctx CoreContext) BuildSignMsg(msgs []sdk.Msg) (authtypes.StdSignMsg, error
 	return authtypes.StdSignMsg{
 		ChainID:       ctx.ChainID,
 		AccountNumber: 0,
-		Sequence:      ctx.Sequence,
+		Sequence:      seq,
 		Memo:          ctx.Memo,
 		Msgs:          msgs,
 		Fee:           authtypes.NewStdFee(1, fees),
 	}, nil
 }
 
-func (ctx CoreContext) BuildAndSign(msgs []sdk.Msg) ([]byte, error) {
-	msg, err := ctx.BuildSignMsg(msgs)
+func (ctx CoreContext) BuildAndSign(msgs []sdk.Msg, optionalSigners ...OptionalSigner) ([]byte, error) {
+	primary, err := ctx.BuildSignMsg(msgs, ctx.Sequence)
 	if err != nil {
 		return nil, err
 	}
+	stdMsgs := []authtypes.StdSignMsg{primary}
+	privKeys := []crypto.PrivKey{ctx.PrivKey}
+	for _, signer := range optionalSigners {
+		msg, err := ctx.BuildSignMsg(msgs, ctx.Sequence)
+		if err != nil {
+			return nil, err
+		}
+		stdMsgs = append(stdMsgs, msg)
+		privKeys = append(privKeys, signer.PrivKey)
+	}
 
-	return ctx.Sign(msg)
+	return ctx.Sign(stdMsgs, privKeys)
 }
 
 // GetNode prepares a simple rpc.Client

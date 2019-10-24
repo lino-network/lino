@@ -20,38 +20,6 @@ type AccountKeeper struct {
 	mock.Mock
 }
 
-// AddCoinToAddress provides a mock function with given fields: ctx, addr, coin
-func (_m *AccountKeeper) AddCoinToAddress(ctx types.Context, addr types.AccAddress, coin linotypes.Coin) types.Error {
-	ret := _m.Called(ctx, addr, coin)
-
-	var r0 types.Error
-	if rf, ok := ret.Get(0).(func(types.Context, types.AccAddress, linotypes.Coin) types.Error); ok {
-		r0 = rf(ctx, addr, coin)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(types.Error)
-		}
-	}
-
-	return r0
-}
-
-// AddCoinToUsername provides a mock function with given fields: ctx, username, coin
-func (_m *AccountKeeper) AddCoinToUsername(ctx types.Context, username linotypes.AccountKey, coin linotypes.Coin) types.Error {
-	ret := _m.Called(ctx, username, coin)
-
-	var r0 types.Error
-	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey, linotypes.Coin) types.Error); ok {
-		r0 = rf(ctx, username, coin)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(types.Error)
-		}
-	}
-
-	return r0
-}
-
 // AddFrozenMoney provides a mock function with given fields: ctx, username, amount, start, interval, times
 func (_m *AccountKeeper) AddFrozenMoney(ctx types.Context, username linotypes.AccountKey, amount linotypes.Coin, start int64, interval int64, times int64) types.Error {
 	ret := _m.Called(ctx, username, amount, start, interval, times)
@@ -68,36 +36,20 @@ func (_m *AccountKeeper) AddFrozenMoney(ctx types.Context, username linotypes.Ac
 	return r0
 }
 
-// AuthorizePermission provides a mock function with given fields: ctx, me, grantTo, validityPeriod, grantLevel, amount
-func (_m *AccountKeeper) AuthorizePermission(ctx types.Context, me linotypes.AccountKey, grantTo linotypes.AccountKey, validityPeriod int64, grantLevel linotypes.Permission, amount linotypes.Coin) types.Error {
-	ret := _m.Called(ctx, me, grantTo, validityPeriod, grantLevel, amount)
-
-	var r0 types.Error
-	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey, linotypes.AccountKey, int64, linotypes.Permission, linotypes.Coin) types.Error); ok {
-		r0 = rf(ctx, me, grantTo, validityPeriod, grantLevel, amount)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(types.Error)
-		}
-	}
-
-	return r0
-}
-
-// CheckSigningPubKeyOwner provides a mock function with given fields: ctx, me, signKey, permission, amount
-func (_m *AccountKeeper) CheckSigningPubKeyOwner(ctx types.Context, me linotypes.AccountKey, signKey crypto.PubKey, permission linotypes.Permission, amount linotypes.Coin) (linotypes.AccountKey, types.Error) {
-	ret := _m.Called(ctx, me, signKey, permission, amount)
+// CheckSigningPubKeyOwner provides a mock function with given fields: ctx, me, signKey
+func (_m *AccountKeeper) CheckSigningPubKeyOwner(ctx types.Context, me linotypes.AccountKey, signKey crypto.PubKey) (linotypes.AccountKey, types.Error) {
+	ret := _m.Called(ctx, me, signKey)
 
 	var r0 linotypes.AccountKey
-	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey, crypto.PubKey, linotypes.Permission, linotypes.Coin) linotypes.AccountKey); ok {
-		r0 = rf(ctx, me, signKey, permission, amount)
+	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey, crypto.PubKey) linotypes.AccountKey); ok {
+		r0 = rf(ctx, me, signKey)
 	} else {
 		r0 = ret.Get(0).(linotypes.AccountKey)
 	}
 
 	var r1 types.Error
-	if rf, ok := ret.Get(1).(func(types.Context, linotypes.AccountKey, crypto.PubKey, linotypes.Permission, linotypes.Coin) types.Error); ok {
-		r1 = rf(ctx, me, signKey, permission, amount)
+	if rf, ok := ret.Get(1).(func(types.Context, linotypes.AccountKey, crypto.PubKey) types.Error); ok {
+		r1 = rf(ctx, me, signKey)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(types.Error)
@@ -114,22 +66,6 @@ func (_m *AccountKeeper) CheckSigningPubKeyOwnerByAddress(ctx types.Context, add
 	var r0 types.Error
 	if rf, ok := ret.Get(0).(func(types.Context, types.AccAddress, crypto.PubKey, bool) types.Error); ok {
 		r0 = rf(ctx, addr, signkey, isPaid)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(types.Error)
-		}
-	}
-
-	return r0
-}
-
-// CreateAccount provides a mock function with given fields: ctx, username, signingKey, transactionKey
-func (_m *AccountKeeper) CreateAccount(ctx types.Context, username linotypes.AccountKey, signingKey crypto.PubKey, transactionKey crypto.PubKey) types.Error {
-	ret := _m.Called(ctx, username, signingKey, transactionKey)
-
-	var r0 types.Error
-	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey, crypto.PubKey, crypto.PubKey) types.Error); ok {
-		r0 = rf(ctx, username, signingKey, transactionKey)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(types.Error)
@@ -167,6 +103,22 @@ func (_m *AccountKeeper) ExportToFile(ctx types.Context, cdc *amino.Codec, filep
 	return r0
 }
 
+// GenesisAccount provides a mock function with given fields: ctx, username, signingKey, transactionKey
+func (_m *AccountKeeper) GenesisAccount(ctx types.Context, username linotypes.AccountKey, signingKey crypto.PubKey, transactionKey crypto.PubKey) types.Error {
+	ret := _m.Called(ctx, username, signingKey, transactionKey)
+
+	var r0 types.Error
+	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey, crypto.PubKey, crypto.PubKey) types.Error); ok {
+		r0 = rf(ctx, username, signingKey, transactionKey)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(types.Error)
+		}
+	}
+
+	return r0
+}
+
 // GetAddress provides a mock function with given fields: ctx, username
 func (_m *AccountKeeper) GetAddress(ctx types.Context, username linotypes.AccountKey) (types.AccAddress, types.Error) {
 	ret := _m.Called(ctx, username)
@@ -177,31 +129,6 @@ func (_m *AccountKeeper) GetAddress(ctx types.Context, username linotypes.Accoun
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(types.AccAddress)
-		}
-	}
-
-	var r1 types.Error
-	if rf, ok := ret.Get(1).(func(types.Context, linotypes.AccountKey) types.Error); ok {
-		r1 = rf(ctx, username)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(types.Error)
-		}
-	}
-
-	return r0, r1
-}
-
-// GetAllGrantPubKeys provides a mock function with given fields: ctx, username
-func (_m *AccountKeeper) GetAllGrantPubKeys(ctx types.Context, username linotypes.AccountKey) ([]*model.GrantPermission, types.Error) {
-	ret := _m.Called(ctx, username)
-
-	var r0 []*model.GrantPermission
-	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey) []*model.GrantPermission); ok {
-		r0 = rf(ctx, username)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*model.GrantPermission)
 		}
 	}
 
@@ -292,31 +219,6 @@ func (_m *AccountKeeper) GetFrozenMoneyList(ctx types.Context, addr types.Addres
 	return r0, r1
 }
 
-// GetGrantPubKeys provides a mock function with given fields: ctx, username, grantTo
-func (_m *AccountKeeper) GetGrantPubKeys(ctx types.Context, username linotypes.AccountKey, grantTo linotypes.AccountKey) ([]*model.GrantPermission, types.Error) {
-	ret := _m.Called(ctx, username, grantTo)
-
-	var r0 []*model.GrantPermission
-	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey, linotypes.AccountKey) []*model.GrantPermission); ok {
-		r0 = rf(ctx, username, grantTo)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*model.GrantPermission)
-		}
-	}
-
-	var r1 types.Error
-	if rf, ok := ret.Get(1).(func(types.Context, linotypes.AccountKey, linotypes.AccountKey) types.Error); ok {
-		r1 = rf(ctx, username, grantTo)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(types.Error)
-		}
-	}
-
-	return r0, r1
-}
-
 // GetInfo provides a mock function with given fields: ctx, username
 func (_m *AccountKeeper) GetInfo(ctx types.Context, username linotypes.AccountKey) (*model.AccountInfo, types.Error) {
 	ret := _m.Called(ctx, username)
@@ -358,6 +260,29 @@ func (_m *AccountKeeper) GetMeta(ctx types.Context, username linotypes.AccountKe
 	var r1 types.Error
 	if rf, ok := ret.Get(1).(func(types.Context, linotypes.AccountKey) types.Error); ok {
 		r1 = rf(ctx, username)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(types.Error)
+		}
+	}
+
+	return r0, r1
+}
+
+// GetPool provides a mock function with given fields: ctx, poolName
+func (_m *AccountKeeper) GetPool(ctx types.Context, poolName linotypes.PoolName) (linotypes.Coin, types.Error) {
+	ret := _m.Called(ctx, poolName)
+
+	var r0 linotypes.Coin
+	if rf, ok := ret.Get(0).(func(types.Context, linotypes.PoolName) linotypes.Coin); ok {
+		r0 = rf(ctx, poolName)
+	} else {
+		r0 = ret.Get(0).(linotypes.Coin)
+	}
+
+	var r1 types.Error
+	if rf, ok := ret.Get(1).(func(types.Context, linotypes.PoolName) types.Error); ok {
+		r1 = rf(ctx, poolName)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(types.Error)
@@ -438,6 +363,20 @@ func (_m *AccountKeeper) GetSigningKey(ctx types.Context, username linotypes.Acc
 	return r0, r1
 }
 
+// GetSupply provides a mock function with given fields: ctx
+func (_m *AccountKeeper) GetSupply(ctx types.Context) model.Supply {
+	ret := _m.Called(ctx)
+
+	var r0 model.Supply
+	if rf, ok := ret.Get(0).(func(types.Context) model.Supply); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Get(0).(model.Supply)
+	}
+
+	return r0
+}
+
 // GetTransactionKey provides a mock function with given fields: ctx, username
 func (_m *AccountKeeper) GetTransactionKey(ctx types.Context, username linotypes.AccountKey) (crypto.PubKey, types.Error) {
 	ret := _m.Called(ctx, username)
@@ -493,13 +432,18 @@ func (_m *AccountKeeper) IncreaseSequenceByOne(ctx types.Context, address types.
 	return r0
 }
 
-// MinusCoinFromAddress provides a mock function with given fields: ctx, addr, coin
-func (_m *AccountKeeper) MinusCoinFromAddress(ctx types.Context, addr types.AccAddress, coin linotypes.Coin) types.Error {
-	ret := _m.Called(ctx, addr, coin)
+// InitGenesis provides a mock function with given fields: ctx, total, pools
+func (_m *AccountKeeper) InitGenesis(ctx types.Context, total linotypes.Coin, pools []model.Pool) {
+	_m.Called(ctx, total, pools)
+}
+
+// Mint provides a mock function with given fields: ctx
+func (_m *AccountKeeper) Mint(ctx types.Context) types.Error {
+	ret := _m.Called(ctx)
 
 	var r0 types.Error
-	if rf, ok := ret.Get(0).(func(types.Context, types.AccAddress, linotypes.Coin) types.Error); ok {
-		r0 = rf(ctx, addr, coin)
+	if rf, ok := ret.Get(0).(func(types.Context) types.Error); ok {
+		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(types.Error)
@@ -509,13 +453,13 @@ func (_m *AccountKeeper) MinusCoinFromAddress(ctx types.Context, addr types.AccA
 	return r0
 }
 
-// MinusCoinFromUsername provides a mock function with given fields: ctx, username, coin
-func (_m *AccountKeeper) MinusCoinFromUsername(ctx types.Context, username linotypes.AccountKey, coin linotypes.Coin) types.Error {
-	ret := _m.Called(ctx, username, coin)
+// MoveBetweenPools provides a mock function with given fields: ctx, from, to, amount
+func (_m *AccountKeeper) MoveBetweenPools(ctx types.Context, from linotypes.PoolName, to linotypes.PoolName, amount linotypes.Coin) types.Error {
+	ret := _m.Called(ctx, from, to, amount)
 
 	var r0 types.Error
-	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey, linotypes.Coin) types.Error); ok {
-		r0 = rf(ctx, username, coin)
+	if rf, ok := ret.Get(0).(func(types.Context, linotypes.PoolName, linotypes.PoolName, linotypes.Coin) types.Error); ok {
+		r0 = rf(ctx, from, to, amount)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(types.Error)
@@ -525,13 +469,45 @@ func (_m *AccountKeeper) MinusCoinFromUsername(ctx types.Context, username linot
 	return r0
 }
 
-// MoveCoinAccOrAddr provides a mock function with given fields: ctx, sender, receiver, coin
-func (_m *AccountKeeper) MoveCoinAccOrAddr(ctx types.Context, sender linotypes.AccOrAddr, receiver linotypes.AccOrAddr, coin linotypes.Coin) types.Error {
+// MoveCoin provides a mock function with given fields: ctx, sender, receiver, coin
+func (_m *AccountKeeper) MoveCoin(ctx types.Context, sender linotypes.AccOrAddr, receiver linotypes.AccOrAddr, coin linotypes.Coin) types.Error {
 	ret := _m.Called(ctx, sender, receiver, coin)
 
 	var r0 types.Error
 	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccOrAddr, linotypes.AccOrAddr, linotypes.Coin) types.Error); ok {
 		r0 = rf(ctx, sender, receiver, coin)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(types.Error)
+		}
+	}
+
+	return r0
+}
+
+// MoveFromPool provides a mock function with given fields: ctx, poolName, dest, amount
+func (_m *AccountKeeper) MoveFromPool(ctx types.Context, poolName linotypes.PoolName, dest linotypes.AccOrAddr, amount linotypes.Coin) types.Error {
+	ret := _m.Called(ctx, poolName, dest, amount)
+
+	var r0 types.Error
+	if rf, ok := ret.Get(0).(func(types.Context, linotypes.PoolName, linotypes.AccOrAddr, linotypes.Coin) types.Error); ok {
+		r0 = rf(ctx, poolName, dest, amount)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(types.Error)
+		}
+	}
+
+	return r0
+}
+
+// MoveToPool provides a mock function with given fields: ctx, poolName, from, amount
+func (_m *AccountKeeper) MoveToPool(ctx types.Context, poolName linotypes.PoolName, from linotypes.AccOrAddr, amount linotypes.Coin) types.Error {
+	ret := _m.Called(ctx, poolName, from, amount)
+
+	var r0 types.Error
+	if rf, ok := ret.Get(0).(func(types.Context, linotypes.PoolName, linotypes.AccOrAddr, linotypes.Coin) types.Error); ok {
+		r0 = rf(ctx, poolName, from, amount)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(types.Error)
@@ -564,22 +540,6 @@ func (_m *AccountKeeper) RegisterAccount(ctx types.Context, referrer linotypes.A
 	var r0 types.Error
 	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccOrAddr, linotypes.Coin, linotypes.AccountKey, crypto.PubKey, crypto.PubKey) types.Error); ok {
 		r0 = rf(ctx, referrer, registerFee, username, signingKey, transactionKey)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(types.Error)
-		}
-	}
-
-	return r0
-}
-
-// RevokePermission provides a mock function with given fields: ctx, me, grantTo, permission
-func (_m *AccountKeeper) RevokePermission(ctx types.Context, me linotypes.AccountKey, grantTo linotypes.AccountKey, permission linotypes.Permission) types.Error {
-	ret := _m.Called(ctx, me, grantTo, permission)
-
-	var r0 types.Error
-	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey, linotypes.AccountKey, linotypes.Permission) types.Error); ok {
-		r0 = rf(ctx, me, grantTo, permission)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(types.Error)

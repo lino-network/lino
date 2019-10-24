@@ -1,0 +1,42 @@
+[
+  {
+    "prefix": "0",
+    "key": "user1",
+    "val": {
+      "type": "lino/account/info",
+      "value": {
+        "username": "user1",
+        "created_at": "123",
+        "signing_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "A6P8IUdt9DKrYCe3/Tflt7DBdgFokRcCKkixt+UbhjZ8"
+        },
+        "transaction_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "Aot3u5m7vuxUOszkS6IZW5XYVu6ATvZsfSQIjtQo9tML"
+        },
+        "address": "cosmos1kreqzurg204at9595qtlwsyltjyehmgzrm2utg"
+      }
+    }
+  },
+  {
+    "prefix": "0",
+    "key": "user2",
+    "val": {
+      "type": "lino/account/info",
+      "value": {
+        "username": "user2",
+        "created_at": "456",
+        "signing_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "A+KW7obJ0BpKqUWmY33svTBxGdTfRhmOym7A5imWWwGm"
+        },
+        "transaction_key": {
+          "type": "tendermint/PubKeySecp256k1",
+          "value": "AoFqbXKmblwKVggqb8Cqo30gRKs9EfqwhOhuyOKlGCuD"
+        },
+        "address": "cosmos1j5s5a4lfu0t25f77rj6c0v4wpafa6z9g7ks5uw"
+      }
+    }
+  }
+]

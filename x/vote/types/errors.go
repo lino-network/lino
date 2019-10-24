@@ -59,10 +59,22 @@ func ErrNoDuty() sdk.Error {
 
 // ErrFrozenAmountIsNotEmpty
 func ErrFrozenAmountIsNotEmpty() sdk.Error {
-	return types.NewError(types.CodeFrozenAmountIsNotEmpty, fmt.Sprintf("forzen money is not empty"))
+	return types.NewError(types.CodeFrozenAmountIsNotEmpty, fmt.Sprintf("frozen money is not empty"))
+}
+
+// ErrNegativeFrozenAmount -
+func ErrNegativeFrozenAmount() sdk.Error {
+	return types.NewError(
+		types.CodeNegativeFrozenAmount, fmt.Sprintf("fronzen amount is negative"))
 }
 
 // ErrInsufficientStake
 func ErrInsufficientStake() sdk.Error {
 	return types.NewError(types.CodeInsufficientStake, fmt.Sprintf("stake is not enough"))
+}
+
+// ErrStakeStatNotFound -
+func ErrStakeStatNotFound(day int64) sdk.Error {
+	return types.NewError(
+		types.CodeStakeStatNotFound, fmt.Sprintf("stake stats not found: %d", day))
 }

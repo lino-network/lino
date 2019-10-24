@@ -19,7 +19,7 @@ func TestVoteStandby(t *testing.T) {
 	// testName := "TestVoteStandby"
 
 	// start with 22 genesis validator
-	baseT := time.Now().Add(100 * time.Second)
+	baseT := time.Unix(0, 0).Add(100 * time.Second)
 	baseTime := baseT.Unix()
 	lb := test.NewTestLinoBlockchain(t, test.DefaultNumOfVal, baseT)
 
@@ -27,7 +27,6 @@ func TestVoteStandby(t *testing.T) {
 	for i := 0; i < 1; i++ {
 		newAccountResetPriv := secp256k1.GenPrivKey()
 		newAccountTransactionPriv := secp256k1.GenPrivKey()
-		newAccountAppPriv := secp256k1.GenPrivKey()
 
 		newValidatorPriv := secp256k1.GenPrivKey()
 
@@ -35,13 +34,13 @@ func TestVoteStandby(t *testing.T) {
 		newAccountName += strconv.Itoa(i)
 
 		test.CreateAccount(t, newAccountName, lb, uint64(i),
-			newAccountResetPriv, newAccountTransactionPriv, newAccountAppPriv, "500000")
+			newAccountResetPriv, newAccountTransactionPriv, "500000")
 
 		voteDepositMsg := types.NewStakeInMsg(newAccountName, linotypes.LNO("200000"))
-		test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountTransactionPriv, baseTime)
+		test.SignCheckDeliver(t, lb, voteDepositMsg, 1, true, newAccountTransactionPriv, baseTime)
 
 		valDepositMsg := valtypes.NewValidatorRegisterMsg(newAccountName, newValidatorPriv.PubKey(), "")
-		test.SignCheckDeliver(t, lb, valDepositMsg, 1, true, newAccountTransactionPriv, baseTime)
+		test.SignCheckDeliver(t, lb, valDepositMsg, 2, true, newAccountTransactionPriv, baseTime)
 
 		test.CheckOncallValidatorList(t, newAccountName, false, lb)
 		test.CheckStandbyValidatorList(t, newAccountName, true, lb)
@@ -50,17 +49,16 @@ func TestVoteStandby(t *testing.T) {
 
 	newAccountResetPriv := secp256k1.GenPrivKey()
 	newAccountTransactionPriv := secp256k1.GenPrivKey()
-	newAccountAppPriv := secp256k1.GenPrivKey()
 	newAccountName := "voter"
 
 	test.CreateAccount(t, newAccountName, lb, uint64(1),
-		newAccountResetPriv, newAccountTransactionPriv, newAccountAppPriv, "500000")
+		newAccountResetPriv, newAccountTransactionPriv, "500000")
 	voteDepositMsg := types.NewStakeInMsg(newAccountName, linotypes.LNO("100000"))
-	test.SignCheckDeliver(t, lb, voteDepositMsg, 0, true, newAccountTransactionPriv, baseTime)
+	test.SignCheckDeliver(t, lb, voteDepositMsg, 1, true, newAccountTransactionPriv, baseTime)
 
 	// let voter vote altval
 	voteMsg := valtypes.NewVoteValidatorMsg(newAccountName, []string{"altval0"})
-	test.SignCheckDeliver(t, lb, voteMsg, 1, true, newAccountTransactionPriv, baseTime)
+	test.SignCheckDeliver(t, lb, voteMsg, 2, true, newAccountTransactionPriv, baseTime)
 
 	// check altval has become oncall and vote increased
 	test.CheckOncallValidatorList(t, "altval0", true, lb)

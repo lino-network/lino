@@ -34,33 +34,32 @@ type FrozenMoneyIR struct {
 	Interval int64      `json:"interval"`
 }
 
-type PermissionIR struct {
-	Permission types.Permission `json:"permission"`
-	CreatedAt  int64            `json:"created_at"`
-	ExpiresAt  int64            `json:"expires_at"`
-	Amount     types.Coin       `json:"amount"`
-}
-
-// GrantPubKeyIR also in account, no pk.
-// must use AuthorizePermission for now. As this grant permission will be removed
-// very soon, it is okay to let this happen.
-type GrantPermissionIR struct {
-	Username    types.AccountKey `json:"username"`
-	GrantTo     types.AccountKey `json:"grant_to"`
-	Permissions []PermissionIR   `json:"permissions"`
-}
-
 // AccountMetaIR - stores optional fields.
 type AccountMetaIR struct {
 	Username types.AccountKey `json:"username"`
 	JSONMeta string           `json:"json_meta"`
 }
 
+// PoolIR - the module account.
+type PoolIR struct {
+	Name    types.PoolName `json:"name"`
+	Balance types.Coin     `json:"balance"`
+}
+
+// SupplyIR - stats of lino supply.
+type SupplyIR struct {
+	LastYearTotal     types.Coin `json:"last_year_total"`
+	Total             types.Coin `json:"total"`
+	ChainStartTime    int64      `json:"chain_start_time"`
+	LastInflationTime int64      `json:"last_inflation_time"`
+}
+
 // AccountTablesIR -
 type AccountTablesIR struct {
-	Version  int                 `json:"version"`
-	Accounts []AccountIR         `json:"accounts"`
-	Banks    []AccountBankIR     `json:"banks"`
-	Metas    []AccountMetaIR     `json:"metas"`
-	Grants   []GrantPermissionIR `json:"grants"`
+	Version  int             `json:"version"`
+	Accounts []AccountIR     `json:"accounts"`
+	Banks    []AccountBankIR `json:"banks"`
+	Metas    []AccountMetaIR `json:"metas"`
+	Pools    []PoolIR        `json:"pools"`
+	Supply   SupplyIR        `json:"supply"`
 }

@@ -442,6 +442,18 @@ func (suite *DeveloperMsgTestSuite) TestIDATransferMsgValidateBasic() {
 			expectedErr: ErrInvalidUsername(),
 		},
 		{
+			testName: "ok1",
+			msg: IDATransferMsg{
+				App:    "app1",
+				From:   "user1",
+				To:     "app1",
+				Amount: "123",
+				Signer: "x",
+				Memo:   tooLongUTF8Str,
+			},
+			expectedErr: ErrInvalidMemo(),
+		},
+		{
 			testName: "ok user to app",
 			msg: IDATransferMsg{
 				App:    "app1",
@@ -567,134 +579,6 @@ func (suite *DeveloperMsgTestSuite) TestUpdateAffiliatedMsgValidateBasic() {
 	}
 }
 
-func (suite *DeveloperMsgTestSuite) TestGrantPermissionMsgValidateBasic() {
-	testCases := []struct {
-		testName           string
-		grantPermissionMsg GrantPermissionMsg
-		expectError        sdk.Error
-	}{
-		{
-			testName:           "app permission",
-			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", 10, types.AppPermission, "1"),
-			expectError:        nil,
-		},
-		{
-			testName:           "reset permission is too high",
-			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", 10, types.ResetPermission, "1"),
-			expectError:        ErrGrantPermissionTooHigh(),
-		},
-		{
-			testName:           "transaction permission is too high",
-			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", 10, types.TransactionPermission, "1"),
-			expectError:        ErrGrantPermissionTooHigh(),
-		},
-		{
-			testName:           "grant app permission is too high",
-			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", 10, types.GrantAppPermission, "1"),
-			expectError:        ErrGrantPermissionTooHigh(),
-		},
-		{
-			testName:           "grant pre-auth permission with invalid coin",
-			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", 10, types.PreAuthorizationPermission, "0"),
-			expectError:        types.ErrInvalidCoins("LNO can't be less than lower bound"),
-		},
-		{
-			testName:           "grant both app and pre-auth permission with invalid coin",
-			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", 10, types.AppAndPreAuthorizationPermission, "0"),
-			expectError:        types.ErrInvalidCoins("LNO can't be less than lower bound"),
-		},
-		{
-			testName:           "invalid validity period",
-			grantPermissionMsg: NewGrantPermissionMsg("user1", "app", -1, types.AppPermission, "0"),
-			expectError:        ErrInvalidValidityPeriod(),
-		},
-		{
-			testName:           "invalid username",
-			grantPermissionMsg: NewGrantPermissionMsg("us", "app", 1, types.AppPermission, "0"),
-			expectError:        ErrInvalidUsername(),
-		},
-		{
-			testName:           "invalid authenticate app, app name is too short",
-			grantPermissionMsg: NewGrantPermissionMsg("user1", "ap", 1, types.AppPermission, "0"),
-			expectError:        ErrInvalidAuthorizedApp(),
-		},
-		{
-			testName:           "invalid username",
-			grantPermissionMsg: NewGrantPermissionMsg("user1user1user1user1user1", "app", 1, types.AppPermission, "0"),
-			expectError:        ErrInvalidUsername(),
-		},
-		{
-			testName:           "invalid authenticate app, app name is too long",
-			grantPermissionMsg: NewGrantPermissionMsg("user1", "appappappappappappapp", 1, types.AppPermission, "0"),
-			expectError:        ErrInvalidAuthorizedApp(),
-		},
-		{
-			testName:           "invalid authenticate app, app name is too long",
-			grantPermissionMsg: NewGrantPermissionMsg("user1", "appappappappappappapp", 1, types.AppPermission, "0"),
-			expectError:        ErrInvalidAuthorizedApp(),
-		},
-	}
-
-	for _, tc := range testCases {
-		result := tc.grantPermissionMsg.ValidateBasic()
-		suite.Equal(result, tc.expectError, "%s", tc.testName)
-	}
-}
-
-func (suite *DeveloperMsgTestSuite) TestRevokePermissionMsgMsgValidateBasic() {
-	testCases := []struct {
-		testName            string
-		revokePermissionMsg RevokePermissionMsg
-		expectError         sdk.Error
-	}{
-		{
-			testName:            "revoke app permission",
-			revokePermissionMsg: NewRevokePermissionMsg("user1", "app", int(types.AppPermission)),
-			expectError:         nil,
-		},
-		{
-			testName:            "username is too short",
-			revokePermissionMsg: NewRevokePermissionMsg("us", "app", int(types.AppPermission)),
-			expectError:         ErrInvalidUsername(),
-		},
-		{
-			testName:            "username is too long",
-			revokePermissionMsg: NewRevokePermissionMsg("user1user1user1user1user1", "app", int(types.AppPermission)),
-			expectError:         ErrInvalidUsername(),
-		},
-		{
-			testName:            "app name is too long",
-			revokePermissionMsg: NewRevokePermissionMsg("user1", "ap", int(types.AppPermission)),
-			expectError:         ErrInvalidUsername(),
-		},
-		{
-			testName:            "app name is too long",
-			revokePermissionMsg: NewRevokePermissionMsg("user1", "appappappappappappappapp", int(types.AppPermission)),
-			expectError:         ErrInvalidUsername(),
-		},
-		{
-			testName:            "reset permission is invalid",
-			revokePermissionMsg: NewRevokePermissionMsg("user1", "app", int(types.ResetPermission)),
-			expectError:         ErrInvalidGrantPermission(),
-		},
-		{
-			testName:            "tx permission is invalid",
-			revokePermissionMsg: NewRevokePermissionMsg("user1", "app", int(types.TransactionPermission)),
-			expectError:         ErrInvalidGrantPermission(),
-		},
-		{
-			testName:            "grant app permission is invalid",
-			revokePermissionMsg: NewRevokePermissionMsg("user1", "app", int(types.GrantAppPermission)),
-			expectError:         ErrInvalidGrantPermission(),
-		},
-	}
-
-	for _, tc := range testCases {
-		result := tc.revokePermissionMsg.ValidateBasic()
-		suite.Equal(result, tc.expectError, "%s", tc.testName)
-	}
-}
-
 func (suite *DeveloperMsgTestSuite) TestMsgPermission() {
 	testCases := []struct {
 		testName         string
@@ -714,36 +598,6 @@ func (suite *DeveloperMsgTestSuite) TestMsgPermission() {
 		{
 			testName:         "developer revoke msg",
 			msg:              NewDeveloperRevokeMsg("test"),
-			expectPermission: types.TransactionPermission,
-		},
-		{
-			testName:         "grant developer app permission msg",
-			msg:              NewGrantPermissionMsg("test", "app", 24*3600, types.AppPermission, "0"),
-			expectPermission: types.GrantAppPermission,
-		},
-		{
-			testName:         "grant developer pre-auth permission msg",
-			msg:              NewGrantPermissionMsg("test", "app", 24*3600, types.PreAuthorizationPermission, "1"),
-			expectPermission: types.TransactionPermission,
-		},
-		{
-			testName:         "grant developer both app and pre-auth permission msg",
-			msg:              NewGrantPermissionMsg("test", "app", 24*3600, types.AppAndPreAuthorizationPermission, "1"),
-			expectPermission: types.TransactionPermission,
-		},
-		{
-			testName:         "grant developer app permission msg",
-			msg:              NewGrantPermissionMsg("test", "app", 24*3600, types.AppPermission, "0"),
-			expectPermission: types.GrantAppPermission,
-		},
-		{
-			testName:         "revoke developer app permission msg",
-			msg:              NewRevokePermissionMsg("test", "app", int(types.AppPermission)),
-			expectPermission: types.TransactionPermission,
-		},
-		{
-			testName:         "revoke developer tx permission msg",
-			msg:              NewRevokePermissionMsg("test", "app", int(types.TransactionPermission)),
 			expectPermission: types.TransactionPermission,
 		},
 		{
@@ -798,16 +652,6 @@ func (suite *DeveloperMsgTestSuite) TestGetSigners() {
 		{
 			testName:      "developer revoke msg",
 			msg:           NewDeveloperRevokeMsg("test"),
-			expectSigners: []types.AccountKey{"test"},
-		},
-		{
-			testName:      "grant developer app permission msg",
-			msg:           NewGrantPermissionMsg("test", "app", 24*3600, types.AppPermission, "0"),
-			expectSigners: []types.AccountKey{"test"},
-		},
-		{
-			testName:      "revoke developer post permission msg",
-			msg:           NewRevokePermissionMsg("test", "app", int(types.AppPermission)),
 			expectSigners: []types.AccountKey{"test"},
 		},
 		{

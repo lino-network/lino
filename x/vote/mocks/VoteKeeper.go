@@ -20,22 +20,6 @@ type VoteKeeper struct {
 	mock.Mock
 }
 
-// AddStake provides a mock function with given fields: ctx, username, amount
-func (_m *VoteKeeper) AddStake(ctx types.Context, username linotypes.AccountKey, amount linotypes.Coin) types.Error {
-	ret := _m.Called(ctx, username, amount)
-
-	var r0 types.Error
-	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey, linotypes.Coin) types.Error); ok {
-		r0 = rf(ctx, username, amount)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(types.Error)
-		}
-	}
-
-	return r0
-}
-
 // AssignDuty provides a mock function with given fields: ctx, username, duty, frozenAmount
 func (_m *VoteKeeper) AssignDuty(ctx types.Context, username linotypes.AccountKey, duty votetypes.VoterDuty, frozenAmount linotypes.Coin) types.Error {
 	ret := _m.Called(ctx, username, duty, frozenAmount)
@@ -59,6 +43,22 @@ func (_m *VoteKeeper) ClaimInterest(ctx types.Context, username linotypes.Accoun
 	var r0 types.Error
 	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey) types.Error); ok {
 		r0 = rf(ctx, username)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(types.Error)
+		}
+	}
+
+	return r0
+}
+
+// DailyAdvanceLinoStakeStats provides a mock function with given fields: ctx
+func (_m *VoteKeeper) DailyAdvanceLinoStakeStats(ctx types.Context) types.Error {
+	ret := _m.Called(ctx)
+
+	var r0 types.Error
+	if rf, ok := ret.Get(0).(func(types.Context) types.Error); ok {
+		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(types.Error)
@@ -135,6 +135,29 @@ func (_m *VoteKeeper) GetLinoStake(ctx types.Context, username linotypes.Account
 	return r0, r1
 }
 
+// GetStakeStatsOfDay provides a mock function with given fields: ctx, day
+func (_m *VoteKeeper) GetStakeStatsOfDay(ctx types.Context, day int64) (model.LinoStakeStat, types.Error) {
+	ret := _m.Called(ctx, day)
+
+	var r0 model.LinoStakeStat
+	if rf, ok := ret.Get(0).(func(types.Context, int64) model.LinoStakeStat); ok {
+		r0 = rf(ctx, day)
+	} else {
+		r0 = ret.Get(0).(model.LinoStakeStat)
+	}
+
+	var r1 types.Error
+	if rf, ok := ret.Get(1).(func(types.Context, int64) types.Error); ok {
+		r1 = rf(ctx, day)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(types.Error)
+		}
+	}
+
+	return r0, r1
+}
+
 // GetVoter provides a mock function with given fields: ctx, username
 func (_m *VoteKeeper) GetVoter(ctx types.Context, username linotypes.AccountKey) (*model.Voter, types.Error) {
 	ret := _m.Called(ctx, username)
@@ -197,13 +220,18 @@ func (_m *VoteKeeper) ImportFromFile(ctx types.Context, cdc *amino.Codec, filepa
 	return r0
 }
 
-// MinusStake provides a mock function with given fields: ctx, username, amount
-func (_m *VoteKeeper) MinusStake(ctx types.Context, username linotypes.AccountKey, amount linotypes.Coin) types.Error {
-	ret := _m.Called(ctx, username, amount)
+// InitGenesis provides a mock function with given fields: ctx
+func (_m *VoteKeeper) InitGenesis(ctx types.Context) {
+	_m.Called(ctx)
+}
+
+// RecordFriction provides a mock function with given fields: ctx, friction
+func (_m *VoteKeeper) RecordFriction(ctx types.Context, friction linotypes.Coin) types.Error {
+	ret := _m.Called(ctx, friction)
 
 	var r0 types.Error
-	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey, linotypes.Coin) types.Error); ok {
-		r0 = rf(ctx, username, amount)
+	if rf, ok := ret.Get(0).(func(types.Context, linotypes.Coin) types.Error); ok {
+		r0 = rf(ctx, friction)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(types.Error)
@@ -213,20 +241,20 @@ func (_m *VoteKeeper) MinusStake(ctx types.Context, username linotypes.AccountKe
 	return r0
 }
 
-// SlashStake provides a mock function with given fields: ctx, username, amount
-func (_m *VoteKeeper) SlashStake(ctx types.Context, username linotypes.AccountKey, amount linotypes.Coin) (linotypes.Coin, types.Error) {
-	ret := _m.Called(ctx, username, amount)
+// SlashStake provides a mock function with given fields: ctx, username, amount, destPool
+func (_m *VoteKeeper) SlashStake(ctx types.Context, username linotypes.AccountKey, amount linotypes.Coin, destPool linotypes.PoolName) (linotypes.Coin, types.Error) {
+	ret := _m.Called(ctx, username, amount, destPool)
 
 	var r0 linotypes.Coin
-	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey, linotypes.Coin) linotypes.Coin); ok {
-		r0 = rf(ctx, username, amount)
+	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey, linotypes.Coin, linotypes.PoolName) linotypes.Coin); ok {
+		r0 = rf(ctx, username, amount, destPool)
 	} else {
 		r0 = ret.Get(0).(linotypes.Coin)
 	}
 
 	var r1 types.Error
-	if rf, ok := ret.Get(1).(func(types.Context, linotypes.AccountKey, linotypes.Coin) types.Error); ok {
-		r1 = rf(ctx, username, amount)
+	if rf, ok := ret.Get(1).(func(types.Context, linotypes.AccountKey, linotypes.Coin, linotypes.PoolName) types.Error); ok {
+		r1 = rf(ctx, username, amount, destPool)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(types.Error)

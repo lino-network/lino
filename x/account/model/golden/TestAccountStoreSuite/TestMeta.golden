@@ -1,0 +1,22 @@
+[
+  {
+    "prefix": "2",
+    "key": "user1",
+    "val": {
+      "type": "lino/account/meta",
+      "value": {
+        "json_meta": "lol"
+      }
+    }
+  },
+  {
+    "prefix": "2",
+    "key": "user2",
+    "val": {
+      "type": "lino/account/meta",
+      "value": {
+        "json_meta": "dota"
+      }
+    }
+  }
+]

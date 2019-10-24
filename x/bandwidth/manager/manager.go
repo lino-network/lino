@@ -148,11 +148,7 @@ func (bm BandwidthManager) ClearBlockInfo(ctx sdk.Context) sdk.Error {
 
 // calcuate the new EMA at the end of each block
 func (bm BandwidthManager) UpdateMaxMPSAndEMA(ctx sdk.Context) sdk.Error {
-	lastBlockTime, err := bm.gm.GetLastBlockTime(ctx)
-	if err != nil {
-		return err
-	}
-
+	lastBlockTime := bm.gm.GetLastBlockTime(ctx)
 	if lastBlockTime >= ctx.BlockHeader().Time.Unix() {
 		return nil
 	}
@@ -307,11 +303,7 @@ func (bm BandwidthManager) RefillAppBandwidthCredit(ctx sdk.Context, accKey lino
 }
 
 func (bm BandwidthManager) GetPunishmentCoeff(ctx sdk.Context, accKey linotypes.AccountKey) (sdk.Dec, sdk.Error) {
-	lastBlockTime, err := bm.gm.GetLastBlockTime(ctx)
-	if err != nil {
-		return sdk.NewDec(1), err
-	}
-
+	lastBlockTime := bm.gm.GetLastBlockTime(ctx)
 	pastTime := ctx.BlockHeader().Time.Unix() - lastBlockTime
 	if pastTime <= 0 {
 		return sdk.NewDec(1), nil
@@ -466,11 +458,9 @@ func (bm BandwidthManager) CheckBandwidth(ctx sdk.Context, addr sdk.AccAddress, 
 
 	//  minus msg fee
 	if !BandwidthManagerTestMode {
-		if err := bm.am.MinusCoinFromAddress(ctx, addr, info.CurMsgFee); err != nil {
-			return err
-		}
-
-		if err := bm.gm.AddToValidatorInflationPool(ctx, info.CurMsgFee); err != nil {
+		err := bm.am.MoveToPool(ctx, linotypes.InflationValidatorPool,
+			linotypes.NewAccOrAddrFromAddr(addr), info.CurMsgFee)
+		if err != nil {
 			return err
 		}
 	}

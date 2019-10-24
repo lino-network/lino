@@ -1,0 +1,44 @@
+[
+  {
+    "prefix": "2",
+    "key": "1",
+    "val": {
+      "type": "lino/stakestats",
+      "value": {
+        "total_consumption_friction": {
+          "amount": "123"
+        },
+        "unclaimed_friction": {
+          "amount": "456"
+        },
+        "total_lino_power": {
+          "amount": "789"
+        },
+        "unclaimed_lino_power": {
+          "amount": "999"
+        }
+      }
+    }
+  },
+  {
+    "prefix": "2",
+    "key": "2",
+    "val": {
+      "type": "lino/stakestats",
+      "value": {
+        "total_consumption_friction": {
+          "amount": "888"
+        },
+        "unclaimed_friction": {
+          "amount": "888"
+        },
+        "total_lino_power": {
+          "amount": "888"
+        },
+        "unclaimed_lino_power": {
+          "amount": "888"
+        }
+      }
+    }
+  }
+]

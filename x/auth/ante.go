@@ -80,22 +80,6 @@ func validateAndExtract(stdTx auth.StdTx) ([]msgAndSigs, sdk.Error) {
 	return rst, nil
 }
 
-func getMsgPermissionAndConsume(msg sdk.Msg) (types.Permission, types.Coin, sdk.Error) {
-	var permission types.Permission
-	var consumeAmount types.Coin
-	switch v := msg.(type) {
-	case types.Msg:
-		permission = v.GetPermission()
-		consumeAmount = v.GetConsumeAmount()
-	case types.AddrMsg:
-		permission = types.TransactionPermission
-		consumeAmount = types.NewCoinFromInt64(0)
-	default:
-		return permission, consumeAmount, ErrUnknownMsgType()
-	}
-	return permission, consumeAmount, nil
-}
-
 type signBytesFactory = func(seq uint64) []byte
 
 // NewAnteHandler - return an AnteHandler
@@ -128,36 +112,27 @@ func NewAnteHandler(am acc.AccountKeeper, bm bandwidth.BandwidthKeeper) sdk.Ante
 }
 
 func validateMsg(ctx sdk.Context, am acc.AccountKeeper, bm bandwidth.BandwidthKeeper, msgSigs msgAndSigs, signBytesCreator signBytesFactory, fee auth.StdFee) sdk.Error {
-	permission, consumeAmount, err := getMsgPermissionAndConsume(msgSigs.msg)
-	if err != nil {
-		return err
-	}
 	// validate each signature.
 	paid := false
 	for i, signer := range msgSigs.signers {
 		sig := msgSigs.sigs[i]
 		var signerAddr sdk.AccAddress
-		var msgSignerAddr sdk.AccAddress
 		if signer.IsAddr {
 			err := checkAddrSigner(ctx, am, signer.Addr, sig.PubKey, paid)
 			if err != nil {
 				return err
 			}
 			signerAddr = signer.Addr
-			msgSignerAddr = signer.Addr
 		} else {
 			var err sdk.Error
-			signerAddr, msgSignerAddr, err = checkAccountSigner(
-				ctx, am, signer.AccountKey, sig.PubKey,
-				permission, consumeAmount)
+			signerAddr, err = checkAccountSigner(ctx, am, signer.AccountKey, sig.PubKey)
 			if err != nil {
 				return err
 			}
-
 		}
 
 		// 1. verify seq.
-		seq, err := am.GetSequence(ctx, msgSignerAddr)
+		seq, err := am.GetSequence(ctx, signerAddr)
 		if err != nil {
 			return err
 		}
@@ -169,10 +144,9 @@ func validateMsg(ctx sdk.Context, am acc.AccountKeeper, bm bandwidth.BandwidthKe
 				ctx.ChainID(), seq))
 		}
 		// 3. increase seq
-		if err := am.IncreaseSequenceByOne(ctx, msgSignerAddr); err != nil {
+		if err := am.IncreaseSequenceByOne(ctx, signerAddr); err != nil {
 			return err
 		}
-
 		// 4. only pay fee in the end.
 		// only the first signer pays the fee
 		if !paid {
@@ -193,23 +167,14 @@ func checkAddrSigner(ctx sdk.Context, am acc.AccountKeeper, addr sdk.AccAddress,
 	return nil
 }
 
-// this function return the actual signer of the msg (grant permission) and original signer of the msg
-func checkAccountSigner(ctx sdk.Context, am acc.AccountKeeper, msgSigner types.AccountKey, signKey crypto.PubKey, permission types.Permission, amount types.Coin) (signerAddr sdk.AccAddress, msgSignerAddr sdk.AccAddress, err sdk.Error) {
+// this function return the actual signer of the msg.
+func checkAccountSigner(ctx sdk.Context, am acc.AccountKeeper, msgSigner types.AccountKey, signKey crypto.PubKey) (signerAddr sdk.AccAddress, err sdk.Error) {
 	// check public key is valid to sign this msg
 	// return signer is the actual signer of the msg
-	signer, err := am.CheckSigningPubKeyOwner(ctx, msgSigner, signKey, permission, amount)
+	signer, err := am.CheckSigningPubKeyOwner(ctx, msgSigner, signKey)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	// get address of actual signer.
-	signerAddr, err = am.GetAddress(ctx, signer)
-	if err != nil {
-		return nil, nil, err
-	}
-	// get address of original signer.
-	msgSignerAddr, err = am.GetAddress(ctx, msgSigner)
-	if err != nil {
-		return nil, nil, err
-	}
-	return signerAddr, msgSignerAddr, nil
+	return am.GetAddress(ctx, signer)
 }

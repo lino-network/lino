@@ -1,0 +1,48 @@
+[
+  {
+    "prefix": "0",
+    "key": "123",
+    "val": {
+      "type": "lino/global/eventlist",
+      "value": {
+        "events": [
+          {
+            "type": "lino/testevent",
+            "value": {
+              "name": "event1"
+            }
+          },
+          {
+            "type": "lino/testevent",
+            "value": {
+              "name": "event2"
+            }
+          },
+          {
+            "type": "lino/testevent",
+            "value": {
+              "name": "event3"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "prefix": "0",
+    "key": "456",
+    "val": {
+      "type": "lino/global/eventlist",
+      "value": {
+        "events": [
+          {
+            "type": "lino/testevent",
+            "value": {
+              "name": "event4"
+            }
+          }
+        ]
+      }
+    }
+  }
+]

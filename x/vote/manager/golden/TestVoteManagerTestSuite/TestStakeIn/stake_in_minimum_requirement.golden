@@ -1,0 +1,44 @@
+[
+  {
+    "prefix": "1",
+    "key": "user1",
+    "val": {
+      "type": "lino/voter",
+      "value": {
+        "username": "user1",
+        "lino_stake": {
+          "amount": "100000000"
+        },
+        "last_power_change_at": "100",
+        "interest": {
+          "amount": "0"
+        },
+        "duty": "0",
+        "frozen_amount": {
+          "amount": "0"
+        }
+      }
+    }
+  },
+  {
+    "prefix": "2",
+    "key": "0",
+    "val": {
+      "type": "lino/stakestats",
+      "value": {
+        "total_consumption_friction": {
+          "amount": "0"
+        },
+        "unclaimed_friction": {
+          "amount": "0"
+        },
+        "total_lino_power": {
+          "amount": "100000000"
+        },
+        "unclaimed_lino_power": {
+          "amount": "100000000"
+        }
+      }
+    }
+  }
+]

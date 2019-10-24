@@ -16,6 +16,7 @@ import (
 	linotypes "github.com/lino-network/lino/types"
 	account "github.com/lino-network/lino/x/account/mocks"
 	accmodel "github.com/lino-network/lino/x/account/model"
+	acctypes "github.com/lino-network/lino/x/account/types"
 	"github.com/lino-network/lino/x/bandwidth/model"
 	"github.com/lino-network/lino/x/bandwidth/types"
 	developer "github.com/lino-network/lino/x/developer/mocks"
@@ -81,16 +82,17 @@ func (suite *BandwidthManagerTestSuite) SetupTest() {
 	}, nil).Maybe()
 	suite.dm.On("GetAffiliatingApp", suite.Ctx, linotypes.AccountKey("AppY")).Return(linotypes.AccountKey("AppY"), nil).Maybe()
 	suite.dm.On("GetAffiliatingApp", suite.Ctx, linotypes.AccountKey("UserX")).Return(linotypes.AccountKey("dummy"), types.ErrUserMsgFeeNotEnough()).Maybe()
-	suite.global.On("GetLastBlockTime", mock.Anything).Return(suite.baseTime.Unix(), nil).Maybe()
-	suite.global.On("AddToValidatorInflationPool", mock.Anything, mock.Anything).Return(nil).Maybe()
-	suite.am.On("MinusCoinFromAddress", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+	suite.global.On("GetLastBlockTime", mock.Anything).Return(suite.baseTime.Unix()).Maybe()
+	suite.am.On("MoveToPool", mock.Anything, linotypes.InflationValidatorPool,
+		mock.Anything, mock.Anything).Return(nil).Maybe()
 	suite.am.On("GetBankByAddress", mock.Anything, sdk.AccAddress("appYAddr")).Return(&accmodel.AccountBank{
 		Username: "AppY",
 	}, nil).Maybe()
 	suite.am.On("GetBankByAddress", mock.Anything, sdk.AccAddress("userXAddr")).Return(&accmodel.AccountBank{
 		Username: "UserX",
 	}, nil).Maybe()
-	suite.am.On("GetBankByAddress", mock.Anything, sdk.AccAddress("emptyAddr")).Return(nil, accmodel.ErrAccountBankNotFound()).Maybe()
+	suite.am.On("GetBankByAddress", mock.Anything, sdk.AccAddress("emptyAddr")).Return(
+		nil, acctypes.ErrAccountBankNotFound(sdk.AccAddress("emptyAddr"))).Maybe()
 }
 
 func (suite *BandwidthManagerTestSuite) TestAddMsgSignedByUser() {
@@ -994,7 +996,7 @@ func (suite *BandwidthManagerTestSuite) TestCheckMsgFee() {
 				CurMsgFee:            linotypes.NewCoinFromInt64(100),
 				CurU:                 sdk.NewDec(1),
 			},
-			expectedErr: accmodel.ErrAccountBankNotFound(),
+			expectedErr: acctypes.ErrAccountBankNotFound(sdk.AccAddress("emptyAddr")),
 		},
 	}
 

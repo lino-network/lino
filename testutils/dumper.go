@@ -34,6 +34,8 @@ type Dumper struct {
 	key       sdk.StoreKey
 }
 
+type OptionCodec func(cdc *wire.Codec)
+
 func prefixToStr(prefix []byte) string {
 	return string([]byte{byte(int(prefix[0]) + int('0'))})
 }
@@ -42,12 +44,15 @@ func strToPrefx(str string) []byte {
 	return []byte{byte(int([]byte(str)[0]) - int('0'))}
 }
 
-func NewDumper(key sdk.StoreKey, storeCdc *wire.Codec) *Dumper {
+func NewDumper(key sdk.StoreKey, storeCdc *wire.Codec, options ...OptionCodec) *Dumper {
 	str := ""
 	dumperCdc := wire.New()
 	wire.RegisterCrypto(dumperCdc)
 	dumperCdc.RegisterInterface((*ValueInterface)(nil), nil)
 	dumperCdc.RegisterConcrete(str, "str", nil)
+	for _, option := range options {
+		option(dumperCdc)
+	}
 	return &Dumper{
 		prefixes:  make(map[string]prefixMatcher),
 		storeCdc:  storeCdc,

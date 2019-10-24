@@ -15,7 +15,7 @@ type ParamKeeper struct {
 }
 
 // GetAccountParam provides a mock function with given fields: ctx
-func (_m *ParamKeeper) GetAccountParam(ctx types.Context) (*param.AccountParam, types.Error) {
+func (_m *ParamKeeper) GetAccountParam(ctx types.Context) *param.AccountParam {
 	ret := _m.Called(ctx)
 
 	var r0 *param.AccountParam
@@ -27,16 +27,7 @@ func (_m *ParamKeeper) GetAccountParam(ctx types.Context) (*param.AccountParam, 
 		}
 	}
 
-	var r1 types.Error
-	if rf, ok := ret.Get(1).(func(types.Context) types.Error); ok {
-		r1 = rf(ctx)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(types.Error)
-		}
-	}
-
-	return r0, r1
+	return r0
 }
 
 // GetBandwidthParam provides a mock function with given fields: ctx
@@ -112,6 +103,22 @@ func (_m *ParamKeeper) GetDeveloperParam(ctx types.Context) (*param.DeveloperPar
 	}
 
 	return r0, r1
+}
+
+// GetGlobalAllocationParam provides a mock function with given fields: ctx
+func (_m *ParamKeeper) GetGlobalAllocationParam(ctx types.Context) *param.GlobalAllocationParam {
+	ret := _m.Called(ctx)
+
+	var r0 *param.GlobalAllocationParam
+	if rf, ok := ret.Get(0).(func(types.Context) *param.GlobalAllocationParam); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*param.GlobalAllocationParam)
+		}
+	}
+
+	return r0
 }
 
 // GetPostParam provides a mock function with given fields: ctx
@@ -213,7 +220,7 @@ func (_m *ParamKeeper) GetValidatorParam(ctx types.Context) *param.ValidatorPara
 }
 
 // GetVoteParam provides a mock function with given fields: ctx
-func (_m *ParamKeeper) GetVoteParam(ctx types.Context) (*param.VoteParam, types.Error) {
+func (_m *ParamKeeper) GetVoteParam(ctx types.Context) *param.VoteParam {
 	ret := _m.Called(ctx)
 
 	var r0 *param.VoteParam
@@ -225,16 +232,7 @@ func (_m *ParamKeeper) GetVoteParam(ctx types.Context) (*param.VoteParam, types.
 		}
 	}
 
-	var r1 types.Error
-	if rf, ok := ret.Get(1).(func(types.Context) types.Error); ok {
-		r1 = rf(ctx)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(types.Error)
-		}
-	}
-
-	return r0, r1
+	return r0
 }
 
 // UpdateGlobalGrowthRate provides a mock function with given fields: ctx, growthRate

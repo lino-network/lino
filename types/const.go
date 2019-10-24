@@ -20,14 +20,10 @@ const (
 	PriceKVStoreKey        = "price"
 	LinoCoinDenom          = "linocoin"
 
+	// legacy, permissions are no longer used.
 	// Different permission level for msg
-	UnknownPermission                = Permission(0)
-	AppPermission                    = Permission(1)
-	TransactionPermission            = Permission(2)
-	ResetPermission                  = Permission(3)
-	GrantAppPermission               = Permission(4)
-	PreAuthorizationPermission       = Permission(5)
-	AppAndPreAuthorizationPermission = Permission(6)
+	UnknownPermission     = Permission(0)
+	TransactionPermission = Permission(2)
 
 	// since upgrade2
 	// signed by the app or its affiliated accounts.
@@ -171,13 +167,16 @@ const (
 	// MaxVotedValidator - the max validators a voter can vote
 	MaxVotedValidators = 50
 
+	// ConsumptionFreezingPeriodSec - content bonus release period.
+	ConsumptionFreezingPeriodSec = 604800
+
+	// ConsumptionFrictionRate - the friction rate of a donation.
+	ConsumptionFrictionRate = "0.099"
+
 	// ValidatorMaxPower - the max power of validator can have
 	ValidatorMaxPower = int64(100000000000)
 
 	// TxSigLimit - max number of sigs in one transaction
 	// XXX(yumin): This will actually limit the number of msg per tx to at most 2.
 	TxSigLimit = 2
-
-	// Upgrade4Update1 - lower minimum stake in requirement.
-	Upgrade4Update1 = 46000
 )

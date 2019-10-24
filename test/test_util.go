@@ -18,8 +18,6 @@ import (
 	acctypes "github.com/lino-network/lino/x/account/types"
 	bandwidthmn "github.com/lino-network/lino/x/bandwidth/manager"
 	bandwidthmodel "github.com/lino-network/lino/x/bandwidth/model"
-	"github.com/lino-network/lino/x/global"
-	globalModel "github.com/lino-network/lino/x/global/model"
 	"github.com/lino-network/lino/x/post"
 	valmodel "github.com/lino-network/lino/x/validator/model"
 
@@ -66,6 +64,24 @@ func NewTestLinoBlockchain(t *testing.T, numOfValidators int, beginBlockTime tim
 	logger, db := loggerAndDB()
 	lb := app.NewLinoBlockchain(logger, db, nil)
 	genesisState := app.GenesisState{
+		GenesisPools: app.GenesisPools{
+			Pools: []app.GenesisPool{
+				{Name: types.InflationDeveloperPool},
+				{Name: types.InflationValidatorPool},
+				{Name: types.InflationConsumptionPool},
+				{Name: types.VoteStakeInPool},
+				{Name: types.VoteStakeReturnPool},
+				{Name: types.VoteFrictionPool},
+				{
+					Name: types.DevIDAReservePool,
+				},
+				{
+					Name:   types.AccountVestingPool,
+					Amount: GenesisTotalCoin,
+				},
+			},
+			Total: GenesisTotalCoin,
+		},
 		InitCoinPrice: types.NewMiniDollar(1200),
 		Accounts:      []app.GenesisAccount{},
 	}
@@ -73,38 +89,32 @@ func NewTestLinoBlockchain(t *testing.T, numOfValidators int, beginBlockTime tim
 	// Generate 21 validators
 	for i := 0; i < numOfValidators; i++ {
 		genesisAcc := app.GenesisAccount{
-			Name:           "validator" + strconv.Itoa(i),
-			Coin:           CoinPerValidator,
-			ResetKey:       secp256k1.GenPrivKey().PubKey(),
-			TransactionKey: secp256k1.GenPrivKey().PubKey(),
-			AppKey:         secp256k1.GenPrivKey().PubKey(),
-			IsValidator:    true,
-			ValPubKey:      secp256k1.GenPrivKey().PubKey(),
+			Name:        "validator" + strconv.Itoa(i),
+			Coin:        CoinPerValidator,
+			TxKey:       secp256k1.GenPrivKey().PubKey(),
+			SignKey:     secp256k1.GenPrivKey().PubKey(),
+			IsValidator: true,
+			ValPubKey:   secp256k1.GenPrivKey().PubKey(),
 		}
 		genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
 	}
 
 	initLNO := GetGenesisAccountCoin(numOfValidators)
 	genesisAcc := app.GenesisAccount{
-		Name:           GenesisUser,
-		Coin:           initLNO,
-		ResetKey:       GenesisPriv.PubKey(),
-		TransactionKey: GenesisTransactionPriv.PubKey(),
-		AppKey:         GenesisAppPriv.PubKey(),
-		IsValidator:    false,
-		ValPubKey:      GenesisPriv.PubKey(),
+		Name:        GenesisUser,
+		Coin:        initLNO,
+		TxKey:       GenesisPriv.PubKey(),
+		SignKey:     GenesisTransactionPriv.PubKey(),
+		IsValidator: false,
+		ValPubKey:   GenesisPriv.PubKey(),
 	}
 	cdc := app.MakeCodec()
 	genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
-	genesisState.InitGlobalMeta = globalModel.InitParamList{
-		MaxTPS:                       sdk.NewDec(1000),
-		ConsumptionFreezingPeriodSec: 7 * 24 * 3600,
-		ConsumptionFrictionRate:      types.NewDecFromRat(5, 100),
-	}
 	result, err := wire.MarshalJSONIndent(cdc, genesisState)
 	assert.Nil(t, err)
 
-	lb.InitChain(abci.RequestInitChain{ChainId: "Lino", AppStateBytes: json.RawMessage(result)})
+	lb.InitChain(abci.RequestInitChain{
+		Time: beginBlockTime, ChainId: "Lino", AppStateBytes: json.RawMessage(result)})
 	lb.BeginBlock(abci.RequestBeginBlock{
 		Header: abci.Header{Height: 1, ChainID: "Lino", Time: beginBlockTime}})
 	lb.EndBlock(abci.RequestEndBlock{})
@@ -117,8 +127,7 @@ func NewTestLinoBlockchain(t *testing.T, numOfValidators int, beginBlockTime tim
 func CheckGlobalAllocation(t *testing.T, lb *app.LinoBlockchain, expectAllocation param.GlobalAllocationParam) {
 	ctx := lb.BaseApp.NewContext(true, abci.Header{ChainID: "Lino", Time: time.Unix(0, 0)})
 	ph := param.NewParamHolder(lb.CapKeyParamStore)
-	allocation, err := ph.GetGlobalAllocationParam(ctx)
-	assert.Nil(t, err)
+	allocation := ph.GetGlobalAllocationParam(ctx)
 	assert.Equal(t, expectAllocation, *allocation)
 }
 
@@ -126,8 +135,7 @@ func CheckGlobalAllocation(t *testing.T, lb *app.LinoBlockchain, expectAllocatio
 func CheckBalance(t *testing.T, accountName string, lb *app.LinoBlockchain, expectBalance types.Coin) {
 	ctx := lb.BaseApp.NewContext(true, abci.Header{ChainID: "Lino", Time: time.Unix(0, 0)})
 	ph := param.NewParamHolder(lb.CapKeyParamStore)
-	gm := global.NewGlobalManager(lb.CapKeyGlobalStore, ph)
-	accManager := accmn.NewAccountManager(lb.CapKeyAccountStore, ph, &gm)
+	accManager := accmn.NewAccountManager(lb.CapKeyAccountStore, ph)
 	saving, err := accManager.GetSavingFromUsername(ctx, types.AccountKey(accountName))
 	assert.Nil(t, err)
 	assert.Equal(t, expectBalance.Amount.Int64(), saving.Amount.Int64())
@@ -137,8 +145,7 @@ func CheckBalance(t *testing.T, accountName string, lb *app.LinoBlockchain, expe
 func CheckAccountInfo(t *testing.T, accountName string, lb *app.LinoBlockchain, expectInfo accmodel.AccountInfo) {
 	ctx := lb.BaseApp.NewContext(true, abci.Header{ChainID: "Lino", Time: time.Unix(0, 0)})
 	ph := param.NewParamHolder(lb.CapKeyParamStore)
-	gm := global.NewGlobalManager(lb.CapKeyGlobalStore, ph)
-	accManager := accmn.NewAccountManager(lb.CapKeyAccountStore, ph, &gm)
+	accManager := accmn.NewAccountManager(lb.CapKeyAccountStore, ph)
 	info, err := accManager.GetInfo(ctx, types.AccountKey(accountName))
 	assert.Nil(t, err)
 	assert.Equal(t, expectInfo, *info)
@@ -217,25 +224,29 @@ func CheckCurBlockInfo(
 // CreateAccount - register account on test blockchain
 func CreateAccount(
 	t *testing.T, accountName string, lb *app.LinoBlockchain, seq uint64,
-	resetPriv, transactionPriv, appPriv secp256k1.PrivKeySecp256k1,
+	txPriv, signPriv secp256k1.PrivKeySecp256k1,
 	numOfLino string) {
 
-	registerMsg := acctypes.NewRegisterMsg(
-		GenesisUser, accountName, numOfLino,
-		resetPriv.PubKey(), transactionPriv.PubKey(), appPriv.PubKey())
-	SignCheckDeliver(t, lb, registerMsg, seq, true, GenesisTransactionPriv, time.Now().Unix())
+	registerMsg := acctypes.NewRegisterV2Msg(
+		types.NewAccOrAddrFromAcc(types.AccountKey(GenesisUser)), accountName, numOfLino,
+		txPriv.PubKey(), signPriv.PubKey())
+	SignCheckDeliverWithMultiSig(t, lb, registerMsg,
+		[]uint64{seq, 0}, true,
+		[]secp256k1.PrivKeySecp256k1{GenesisTransactionPriv, txPriv}, 0)
 }
 
 // CreateAccountWithTime - register account on test blockchain
 func CreateAccountWithTime(
 	t *testing.T, accountName string, lb *app.LinoBlockchain, seq uint64,
-	resetPriv, transactionPriv, appPriv secp256k1.PrivKeySecp256k1,
+	txPriv, signPriv secp256k1.PrivKeySecp256k1,
 	numOfLino string, blockTime int64) {
 
-	registerMsg := acctypes.NewRegisterMsg(
-		GenesisUser, accountName, numOfLino,
-		resetPriv.PubKey(), transactionPriv.PubKey(), appPriv.PubKey())
-	SignCheckDeliver(t, lb, registerMsg, seq, true, GenesisTransactionPriv, blockTime)
+	registerMsg := acctypes.NewRegisterV2Msg(
+		types.NewAccOrAddrFromAcc(types.AccountKey(GenesisUser)), accountName, numOfLino,
+		txPriv.PubKey(), signPriv.PubKey())
+	SignCheckDeliverWithMultiSig(t, lb, registerMsg,
+		[]uint64{seq, 0}, true,
+		[]secp256k1.PrivKeySecp256k1{GenesisTransactionPriv, txPriv}, blockTime)
 }
 
 // GetGenesisAccountCoin - get genesis account coin
@@ -247,19 +258,23 @@ func GetGenesisAccountCoin(numOfValidator int) types.Coin {
 	return initCoin
 }
 
+// SignCheckTxShouldFail - sign transaction, it's checkTx should fail
+func SignCheckTxFail(t *testing.T, lb *app.LinoBlockchain, msg sdk.Msg, seq uint64, priv secp256k1.PrivKeySecp256k1) {
+	// Sign the tx
+	tx := genTx(msg, []uint64{seq}, []secp256k1.PrivKeySecp256k1{priv})
+	// checkTx should always pass.
+	res := lb.Check(tx)
+	require.False(t, res.IsOK(), res.Log)
+}
+
 // SignCheckDeliver - sign transaction, simulate and commit a block
 func SignCheckDeliver(t *testing.T, lb *app.LinoBlockchain, msg sdk.Msg, seq uint64,
 	expPass bool, priv secp256k1.PrivKeySecp256k1, headTime int64) {
 	// Sign the tx
 	tx := genTx(msg, []uint64{seq}, []secp256k1.PrivKeySecp256k1{priv})
-	// XXX(yumin): API changed after upgrad-1, new field tx, passing nil, not sure
-	// about what is the right way..
-	res := lb.Simulate(nil, tx)
-	if expPass {
-		require.True(t, res.IsOK(), res.Log)
-	} else {
-		require.False(t, res.IsOK(), res.Log)
-	}
+	// checkTx should always pass.
+	res := lb.Check(tx)
+	require.True(t, res.IsOK(), res.Log)
 
 	// Simulate a Block
 	lb.BeginBlock(abci.RequestBeginBlock{

@@ -1,0 +1,23 @@
+[
+  {
+    "prefix": "3",
+    "key": "",
+    "val": {
+      "type": "lino/global/bceventerr",
+      "value": [
+        {
+          "time": "123",
+          "err_code": 123,
+          "err_code_space": "̕",
+          "reason": "inflation failed"
+        },
+        {
+          "time": "456",
+          "err_code": 34,
+          "err_code_space": "ر",
+          "reason": "validator failed"
+        }
+      ]
+    }
+  }
+]

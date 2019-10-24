@@ -22,8 +22,6 @@ func NewHandler(am AccountKeeper) sdk.Handler {
 			return handleRecoverMsg(ctx, am, msg)
 		case types.RegisterV2Msg:
 			return handleRegisterV2Msg(ctx, am, msg)
-		case types.RegisterMsg:
-			return handleRegisterMsg(ctx, am, msg)
 		case types.UpdateAccountMsg:
 			return handleUpdateAccountMsg(ctx, am, msg)
 		default:
@@ -39,7 +37,7 @@ func handleTransferMsg(ctx sdk.Context, am AccountKeeper, msg types.TransferMsg)
 	if err != nil {
 		return err.Result()
 	}
-	if err := am.MoveCoinAccOrAddr(ctx,
+	if err := am.MoveCoin(ctx,
 		linotypes.NewAccOrAddrFromAcc(msg.Sender),
 		linotypes.NewAccOrAddrFromAcc(msg.Receiver),
 		coin); err != nil {
@@ -54,7 +52,7 @@ func handleTransferV2Msg(ctx sdk.Context, am AccountKeeper, msg types.TransferV2
 	if err != nil {
 		return err.Result()
 	}
-	if err := am.MoveCoinAccOrAddr(ctx, msg.Sender, msg.Receiver, coin); err != nil {
+	if err := am.MoveCoin(ctx, msg.Sender, msg.Receiver, coin); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
@@ -62,19 +60,6 @@ func handleTransferV2Msg(ctx sdk.Context, am AccountKeeper, msg types.TransferV2
 
 func handleRecoverMsg(ctx sdk.Context, am AccountKeeper, msg types.RecoverMsg) sdk.Result {
 	if err := am.RecoverAccount(ctx, msg.Username, msg.NewTxPubKey, msg.NewSigningPubKey); err != nil {
-		return err.Result()
-	}
-	return sdk.Result{}
-}
-
-// Handle RegisterMsg
-func handleRegisterMsg(ctx sdk.Context, am AccountKeeper, msg types.RegisterMsg) sdk.Result {
-	coin, err := linotypes.LinoToCoin(msg.RegisterFee)
-	if err != nil {
-		return err.Result()
-	}
-	if err := am.RegisterAccount(
-		ctx, linotypes.NewAccOrAddrFromAcc(msg.Referrer), coin, msg.NewUser, msg.NewTransactionPubKey, msg.NewResetPubKey); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}

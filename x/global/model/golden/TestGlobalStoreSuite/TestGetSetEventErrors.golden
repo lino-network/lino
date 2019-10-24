@@ -1,0 +1,31 @@
+[
+  {
+    "prefix": "2",
+    "key": "",
+    "val": {
+      "type": "lino/global/eventerr",
+      "value": [
+        {
+          "time": "123",
+          "event": {
+            "type": "lino/testevent",
+            "value": {
+              "name": "lol"
+            }
+          },
+          "err_code": 123
+        },
+        {
+          "time": "456",
+          "event": {
+            "type": "lino/testevent",
+            "value": {
+              "name": "dota"
+            }
+          },
+          "err_code": 999
+        }
+      ]
+    }
+  }
+]
