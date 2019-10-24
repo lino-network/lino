@@ -11,5 +11,6 @@ const (
 	QuerierRoute = ModuleName
 
 	// query stores
-	QueryPostInfo = "info"
+	QueryPostInfo          = "info"
+	QueryConsumptionWindow = "consumption-window"
 )

@@ -22,6 +22,9 @@ type PostKeeper interface {
 	IDADonate(ctx sdk.Context, from linotypes.AccountKey, n linotypes.MiniIDA, author linotypes.AccountKey, postID string, app, signer linotypes.AccountKey) sdk.Error
 	ExecRewardEvent(ctx sdk.Context, reward types.RewardEvent) sdk.Error
 
+	// querier
+	GetComsumptionWindow(ctx sdk.Context) linotypes.MiniDollar
+
 	ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error
 	ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error
 }

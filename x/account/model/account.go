@@ -48,15 +48,6 @@ type FrozenMoney struct {
 	Interval int64      `json:"interval"`
 }
 
-// GrantPermission - user grant permission to a user with a certain permission
-type GrantPermission struct {
-	GrantTo    types.AccountKey `json:"grant_to"`
-	Permission types.Permission `json:"permission"`
-	CreatedAt  int64            `json:"created_at"`
-	ExpiresAt  int64            `json:"expires_at"`
-	Amount     types.Coin       `json:"amount"`
-}
-
 // AccountMeta - stores optional fields.
 type AccountMeta struct {
 	JSONMeta string `json:"json_meta"`

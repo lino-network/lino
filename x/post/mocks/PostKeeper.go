@@ -96,6 +96,20 @@ func (_m *PostKeeper) ExportToFile(ctx types.Context, cdc *amino.Codec, filepath
 	return r0
 }
 
+// GetComsumptionWindow provides a mock function with given fields: ctx
+func (_m *PostKeeper) GetComsumptionWindow(ctx types.Context) linotypes.MiniDollar {
+	ret := _m.Called(ctx)
+
+	var r0 linotypes.MiniDollar
+	if rf, ok := ret.Get(0).(func(types.Context) linotypes.MiniDollar); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Get(0).(linotypes.MiniDollar)
+	}
+
+	return r0
+}
+
 // GetPost provides a mock function with given fields: ctx, permlink
 func (_m *PostKeeper) GetPost(ctx types.Context, permlink linotypes.Permlink) (model.Post, types.Error) {
 	ret := _m.Called(ctx, permlink)

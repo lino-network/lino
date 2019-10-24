@@ -1,11 +1,15 @@
 package vote
 
 import (
+	"strconv"
+
 	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	linotypes "github.com/lino-network/lino/types"
-	"github.com/lino-network/lino/x/vote/types"
 	abci "github.com/tendermint/tendermint/abci/types"
+
+	linotypes "github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/utils"
+	"github.com/lino-network/lino/x/vote/types"
 )
 
 // creates a querier for vote REST endpoints
@@ -16,6 +20,14 @@ func NewQuerier(vk VoteKeeper) sdk.Querier {
 		switch path[0] {
 		case types.QueryVoter:
 			return queryVoter(ctx, cdc, path[1:], req, vk)
+		case types.QueryStakeStats:
+			return utils.NewQueryResolver(1, func(args ...string) (interface{}, sdk.Error) {
+				day, err := strconv.ParseInt(args[0], 10, 64)
+				if err != nil {
+					return nil, linotypes.ErrInvalidQueryPath()
+				}
+				return vk.GetStakeStatsOfDay(ctx, day)
+			})(ctx, cdc, path)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown vote query endpoint")
 		}

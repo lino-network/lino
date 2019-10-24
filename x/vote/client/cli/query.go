@@ -23,6 +23,10 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 	}
 	cmd.AddCommand(client.GetCommands(
 		getCmdVoter(cdc),
+		utils.SimpleQueryCmd(
+			"stake-stats <day>", "stake-stats <day>",
+			types.QuerierRoute, types.QueryStakeStats,
+			1, &model.LinoStakeStat{})(cdc),
 	)...)
 	return cmd
 }
