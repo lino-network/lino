@@ -124,7 +124,7 @@
       },
       "DeveloperParam": {
         "developer_min_deposit": {
-          "amount": "1000000000000"
+          "amount": "100000000000"
         },
         "developer_coin_return_interval_second": "604800",
         "developer_coin_return_times": "12"
