@@ -3,6 +3,7 @@ package account
 import (
 	"encoding/hex"
 	"strconv"
+	"strings"
 
 	wire "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -10,6 +11,7 @@ import (
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 
 	linotypes "github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/utils"
 	"github.com/lino-network/lino/x/account/model"
 	"github.com/lino-network/lino/x/account/types"
 )
@@ -21,83 +23,40 @@ func NewQuerier(am AccountKeeper) sdk.Querier {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err sdk.Error) {
 		switch path[0] {
 		case types.QueryAccountInfo:
-			return queryAccountInfo(ctx, cdc, path[1:], req, am)
+			return utils.NewQueryResolver(1, func(args ...string) (interface{}, sdk.Error) {
+				return am.GetInfo(ctx, linotypes.AccountKey(args[0]))
+			})(ctx, cdc, path)
 		case types.QueryAccountBank:
-			return queryAccountBank(ctx, cdc, path[1:], req, am)
+			return utils.NewQueryResolver(1, func(args ...string) (interface{}, sdk.Error) {
+				return am.GetBank(ctx, linotypes.AccountKey(args[0]))
+			})(ctx, cdc, path)
 		case types.QueryAccountBankByAddress:
-			return queryAccountBankByAddress(ctx, cdc, path[1:], req, am)
+			return utils.NewQueryResolver(1, func(args ...string) (interface{}, sdk.Error) {
+				addr, e := sdk.AccAddressFromBech32(args[0])
+				if e != nil {
+					return nil, types.ErrQueryFailed()
+				}
+				return am.GetBankByAddress(ctx, addr)
+			})(ctx, cdc, path)
 		case types.QueryAccountMeta:
-			return queryAccountMeta(ctx, cdc, path[1:], req, am)
+			return utils.NewQueryResolver(1, func(args ...string) (interface{}, sdk.Error) {
+				return am.GetMeta(ctx, linotypes.AccountKey(args[0]))
+			})(ctx, cdc, path)
 		case types.QueryTxAndAccountSequence:
 			return queryTxAndSequenceNumber(ctx, cdc, path[1:], req, am)
+		case types.QueryPool:
+			return utils.NewQueryResolver(1, func(args ...string) (interface{}, sdk.Error) {
+				poolname := strings.Join(args, "/")
+				return am.GetPool(ctx, linotypes.PoolName(poolname))
+			})(ctx, cdc, path)
+		case types.QuerySupply:
+			return utils.NewQueryResolver(0, func(args ...string) (interface{}, sdk.Error) {
+				return am.GetSupply(ctx), nil
+			})(ctx, cdc, path)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown account query endpoint")
 		}
 	}
-}
-
-func queryAccountInfo(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, am AccountKeeper) ([]byte, sdk.Error) {
-	if err := linotypes.CheckPathContentAndMinLength(path, 1); err != nil {
-		return nil, err
-	}
-	accountInfo, err := am.GetInfo(ctx, linotypes.AccountKey(path[0]))
-	if err != nil {
-		return nil, err
-	}
-	res, marshalErr := cdc.MarshalJSON(accountInfo)
-	if marshalErr != nil {
-		return nil, types.ErrQueryFailed()
-	}
-	return res, nil
-}
-
-func queryAccountBank(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, am AccountKeeper) ([]byte, sdk.Error) {
-	if err := linotypes.CheckPathContentAndMinLength(path, 1); err != nil {
-		return nil, err
-	}
-	bank, err := am.GetBank(ctx, linotypes.AccountKey(path[0]))
-	if err != nil {
-		return nil, err
-	}
-	res, marshalErr := cdc.MarshalJSON(bank)
-	if marshalErr != nil {
-		return nil, types.ErrQueryFailed()
-	}
-	return res, nil
-}
-
-func queryAccountBankByAddress(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, am AccountKeeper) ([]byte, sdk.Error) {
-	if err := linotypes.CheckPathContentAndMinLength(path, 1); err != nil {
-		return nil, err
-	}
-	addr, e := sdk.AccAddressFromBech32(path[0])
-	if e != nil {
-		return nil, types.ErrQueryFailed()
-	}
-	bank, err := am.GetBankByAddress(ctx, addr)
-	if err != nil {
-		return nil, err
-	}
-	res, marshalErr := cdc.MarshalJSON(bank)
-	if marshalErr != nil {
-		return nil, types.ErrQueryFailed()
-	}
-	return res, nil
-}
-
-func queryAccountMeta(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, am AccountKeeper) ([]byte, sdk.Error) {
-	if err := linotypes.CheckPathContentAndMinLength(path, 1); err != nil {
-		return nil, err
-	}
-	accountMeta, err := am.GetMeta(ctx, linotypes.AccountKey(path[0]))
-	if err != nil {
-		return nil, err
-	}
-	res, marshalErr := cdc.MarshalJSON(accountMeta)
-	if marshalErr != nil {
-		return nil, types.ErrQueryFailed()
-	}
-	return res, nil
 }
 
 func queryTxAndSequenceNumber(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, am AccountKeeper) ([]byte, sdk.Error) {

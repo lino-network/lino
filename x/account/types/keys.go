@@ -19,4 +19,6 @@ const (
 	QueryAccountGrantPubKeys    = "grantPubKey"
 	QueryAccountAllGrantPubKeys = "allGrantPubKey"
 	QueryTxAndAccountSequence   = "txAndSeq"
+	QueryPool                   = "pool"
+	QuerySupply                 = "supply"
 )
