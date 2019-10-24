@@ -92,7 +92,7 @@
         "delegator_coin_return_interval_second": "86401",
         "delegator_coin_return_times": "1",
         "min_stake_in": {
-          "amount": "100000000"
+          "amount": "100000"
         }
       },
       "ProposalParam": {
