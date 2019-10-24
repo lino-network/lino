@@ -136,14 +136,16 @@ func (_m *VoteKeeper) GetLinoStake(ctx types.Context, username linotypes.Account
 }
 
 // GetStakeStatsOfDay provides a mock function with given fields: ctx, day
-func (_m *VoteKeeper) GetStakeStatsOfDay(ctx types.Context, day int64) (model.LinoStakeStat, types.Error) {
+func (_m *VoteKeeper) GetStakeStatsOfDay(ctx types.Context, day int64) (*model.LinoStakeStat, types.Error) {
 	ret := _m.Called(ctx, day)
 
-	var r0 model.LinoStakeStat
-	if rf, ok := ret.Get(0).(func(types.Context, int64) model.LinoStakeStat); ok {
+	var r0 *model.LinoStakeStat
+	if rf, ok := ret.Get(0).(func(types.Context, int64) *model.LinoStakeStat); ok {
 		r0 = rf(ctx, day)
 	} else {
-		r0 = ret.Get(0).(model.LinoStakeStat)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.LinoStakeStat)
+		}
 	}
 
 	var r1 types.Error

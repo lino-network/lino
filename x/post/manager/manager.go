@@ -373,6 +373,10 @@ func (pm PostManager) allocContentBonus(ctx sdk.Context, impact linotypes.MiniDo
 		linotypes.InflationConsumptionPool, linotypes.NewAccOrAddrFromAcc(author), reward)
 }
 
+func (pm PostManager) GetComsumptionWindow(ctx sdk.Context) linotypes.MiniDollar {
+	return pm.postStorage.GetConsumptionWindow(ctx)
+}
+
 // Export - to file.
 func (pm PostManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
 	state := &model.PostTablesIR{

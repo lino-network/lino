@@ -7,7 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/spf13/cobra"
 
-	// linotypes "github.com/lino-network/lino/types"
+	linotypes "github.com/lino-network/lino/types"
 	"github.com/lino-network/lino/utils"
 	"github.com/lino-network/lino/x/post/model"
 	"github.com/lino-network/lino/x/post/types"
@@ -23,6 +23,10 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 	}
 	cmd.AddCommand(client.GetCommands(
 		getCmdInfo(cdc),
+		utils.SimpleQueryCmd(
+			"cw",
+			"cw prints the consumption competition metadata, unit: miniDollar",
+			types.QuerierRoute, types.QueryConsumptionWindow, 0, &linotypes.MiniDollar{})(cdc),
 	)...)
 	return cmd
 }

@@ -270,22 +270,6 @@ func (_m *DeveloperKeeper) GetReservePool(ctx types.Context) model.ReservePool {
 	return r0
 }
 
-// GrantPermission provides a mock function with given fields: ctx, app, user, duration, level, amount
-func (_m *DeveloperKeeper) GrantPermission(ctx types.Context, app linotypes.AccountKey, user linotypes.AccountKey, duration int64, level linotypes.Permission, amount string) types.Error {
-	ret := _m.Called(ctx, app, user, duration, level, amount)
-
-	var r0 types.Error
-	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey, linotypes.AccountKey, int64, linotypes.Permission, string) types.Error); ok {
-		r0 = rf(ctx, app, user, duration, level, amount)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(types.Error)
-		}
-	}
-
-	return r0
-}
-
 // ImportFromFile provides a mock function with given fields: ctx, cdc, filepath
 func (_m *DeveloperKeeper) ImportFromFile(ctx types.Context, cdc *amino.Codec, filepath string) error {
 	ret := _m.Called(ctx, cdc, filepath)
@@ -403,22 +387,6 @@ func (_m *DeveloperKeeper) ReportConsumption(ctx types.Context, username linotyp
 	var r0 types.Error
 	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey, linotypes.MiniDollar) types.Error); ok {
 		r0 = rf(ctx, username, consumption)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(types.Error)
-		}
-	}
-
-	return r0
-}
-
-// RevokePermission provides a mock function with given fields: ctx, user, app, perm
-func (_m *DeveloperKeeper) RevokePermission(ctx types.Context, user linotypes.AccountKey, app linotypes.AccountKey, perm linotypes.Permission) types.Error {
-	ret := _m.Called(ctx, user, app, perm)
-
-	var r0 types.Error
-	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey, linotypes.AccountKey, linotypes.Permission) types.Error); ok {
-		r0 = rf(ctx, user, app, perm)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(types.Error)

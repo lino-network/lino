@@ -6,6 +6,7 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	linotypes "github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/utils"
 	"github.com/lino-network/lino/x/post/types"
 )
 
@@ -16,24 +17,15 @@ func NewQuerier(pm PostKeeper) sdk.Querier {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err sdk.Error) {
 		switch path[0] {
 		case types.QueryPostInfo:
-			return queryPostInfo(ctx, cdc, path[1:], req, pm)
+			return utils.NewQueryResolver(1, func(args ...string) (interface{}, sdk.Error) {
+				return pm.GetPost(ctx, linotypes.Permlink(args[0]))
+			})(ctx, cdc, path)
+		case types.QueryConsumptionWindow:
+			return utils.NewQueryResolver(0, func(args ...string) (interface{}, sdk.Error) {
+				return pm.GetComsumptionWindow(ctx), nil
+			})(ctx, cdc, path)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown post query endpoint")
 		}
 	}
-}
-
-func queryPostInfo(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, pm PostKeeper) ([]byte, sdk.Error) {
-	if err := linotypes.CheckPathContentAndMinLength(path, 1); err != nil {
-		return nil, err
-	}
-	postInfo, err := pm.GetPost(ctx, linotypes.Permlink(path[0]))
-	if err != nil {
-		return nil, err
-	}
-	res, marshalErr := cdc.MarshalJSON(postInfo)
-	if marshalErr != nil {
-		return nil, types.ErrQueryFailed()
-	}
-	return res, nil
 }

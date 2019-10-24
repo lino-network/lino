@@ -32,7 +32,7 @@ type VoteKeeper interface {
 
 	// Getter
 	GetVoter(ctx sdk.Context, username linotypes.AccountKey) (*model.Voter, sdk.Error)
-	GetStakeStatsOfDay(ctx sdk.Context, day int64) (model.LinoStakeStat, sdk.Error)
+	GetStakeStatsOfDay(ctx sdk.Context, day int64) (*model.LinoStakeStat, sdk.Error)
 
 	// import export
 	ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error

@@ -10,7 +10,6 @@ const (
 	// QuerierRoute is the querier route for gov
 	QuerierRoute = ModuleName
 
-	QueryVoter         = "voter"
-	QueryVote          = "vote"
-	QueryReferenceList = "refList"
+	QueryVoter      = "voter"
+	QueryStakeStats = "stake-stats"
 )
