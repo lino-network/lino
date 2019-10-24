@@ -136,10 +136,10 @@
         "validator_coin_return_second": "604800",
         "validator_coin_return_times": "7",
         "penalty_miss_commit": {
-          "amount": "20000000"
+          "amount": "100000000"
         },
         "penalty_byzantine": {
-          "amount": "100000000"
+          "amount": "500000000"
         },
         "absent_commit_limitation": "600",
         "oncall_size": "16",
@@ -165,7 +165,7 @@
         "general_msg_ema_factor": "0.025",
         "app_msg_quota_ratio": "0.8",
         "app_msg_ema_factor": "0.025",
-        "expected_max_mps": "150",
+        "expected_max_mps": "200",
         "msg_fee_factor_a": "6",
         "msg_fee_factor_b": "10",
         "max_mps_decay_rate": "0.99",
