@@ -185,3 +185,9 @@ func ErrInsuffientReservePool() sdk.Error {
 	return types.NewError(
 		types.CodeInsuffientReservePool, fmt.Sprintf(""))
 }
+
+// ErrInvalidMemo -
+func ErrInvalidMemo() sdk.Error {
+	return types.NewError(
+		types.CodeInvalidMemo, fmt.Sprintf("ida invalid memo"))
+}

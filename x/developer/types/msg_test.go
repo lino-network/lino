@@ -442,6 +442,18 @@ func (suite *DeveloperMsgTestSuite) TestIDATransferMsgValidateBasic() {
 			expectedErr: ErrInvalidUsername(),
 		},
 		{
+			testName: "ok1",
+			msg: IDATransferMsg{
+				App:    "app1",
+				From:   "user1",
+				To:     "app1",
+				Amount: "123",
+				Signer: "x",
+				Memo:   tooLongUTF8Str,
+			},
+			expectedErr: ErrInvalidMemo(),
+		},
+		{
 			testName: "ok user to app",
 			msg: IDATransferMsg{
 				App:    "app1",

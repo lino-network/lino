@@ -313,6 +313,7 @@ type IDATransferMsg struct {
 	From   types.AccountKey `json:"from"`
 	To     types.AccountKey `json:"to"`
 	Signer types.AccountKey `json:"singer"`
+	Memo   string           `json:"memo"`
 }
 
 var _ types.Msg = IDATransferMsg{}
@@ -325,6 +326,10 @@ func (msg IDATransferMsg) Type() string { return "IDATransferMsg" }
 
 // ValidateBasic - implements sdk.Msg
 func (msg IDATransferMsg) ValidateBasic() sdk.Error {
+	if len(msg.Memo) > types.MaximumMemoLength {
+		return ErrInvalidMemo()
+	}
+
 	if !msg.App.IsValid() ||
 		!msg.From.IsValid() ||
 		!msg.To.IsValid() ||
