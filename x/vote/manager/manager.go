@@ -146,6 +146,11 @@ func (vm VoteManager) StakeOut(ctx sdk.Context, username linotypes.AccountKey, a
 	// create coin return events to return coins from stake return pool.
 	//// add frozen money for records.
 	param := vm.paramHolder.GetVoteParam(ctx)
+	if ctx.BlockHeight() < linotypes.Upgrade5Update1 {
+		param.VoterCoinReturnIntervalSec = 86401 // 1 day
+		param.VoterCoinReturnTimes = 1
+	}
+
 	if err := vm.am.AddFrozenMoney(
 		ctx, username, amount, ctx.BlockHeader().Time.Unix(),
 		param.VoterCoinReturnIntervalSec, param.VoterCoinReturnTimes); err != nil {

@@ -35,7 +35,7 @@ func NewGoldenTestSuite(dm dumperManager, storeKey *sdk.KVStoreKey) GoldenTestSu
 
 func (suite *GoldenTestSuite) LoadState(enableSubTest bool, importJsonPaths ...string) {
 	// Maybe we shouldn't SetupCtx but only reset the store here.
-	suite.SetupCtx(0, time.Unix(0, 0), suite.storeKey)
+	suite.SetupCtx(suite.height, time.Unix(0, 0), suite.storeKey)
 	if suite.dm == nil {
 		suite.FailNow("Should register a dumpManager before calling LoadState")
 	}

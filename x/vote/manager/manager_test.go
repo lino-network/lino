@@ -73,7 +73,7 @@ func TestVoteManagerTestSuite(t *testing.T) {
 }
 
 func (suite *VoteManagerTestSuite) SetupTest() {
-	suite.SetupCtx(0, time.Unix(0, 0), kvStoreKey)
+	suite.SetupCtx(linotypes.Upgrade5Update1, time.Unix(0, 0), kvStoreKey)
 	suite.user1 = linotypes.AccountKey("user1")
 	suite.user2 = linotypes.AccountKey("user2")
 	suite.user3 = linotypes.AccountKey("user3")

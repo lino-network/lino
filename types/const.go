@@ -176,6 +176,9 @@ const (
 	// ValidatorMaxPower - the max power of validator can have
 	ValidatorMaxPower = int64(100000000000)
 
+	// Fast Stake-out period
+	Upgrade5Update1 = 216000
+
 	// TxSigLimit - max number of sigs in one transaction
 	// XXX(yumin): This will actually limit the number of msg per tx to at most 2.
 	TxSigLimit = 2
