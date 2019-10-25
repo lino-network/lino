@@ -87,10 +87,10 @@
         "validator_allocation": "0.05"
       },
       "VoteParam": {
-        "voter_coin_return_interval_second": "86401",
-        "voter_coin_return_times": "1",
-        "delegator_coin_return_interval_second": "86401",
-        "delegator_coin_return_times": "1",
+        "voter_coin_return_interval_second": "604800",
+        "voter_coin_return_times": "12",
+        "delegator_coin_return_interval_second": "604800",
+        "delegator_coin_return_times": "12",
         "min_stake_in": {
           "amount": "100000"
         }
