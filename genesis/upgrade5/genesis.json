@@ -1,5 +1,5 @@
 {
-  "genesis_time": "TODO",
+  "genesis_time": "2019-10-25T21:12:37.698383683Z",
   "chain_id": "lino-testnet-upgrade5",
   "consensus_params": {
     "block": {
