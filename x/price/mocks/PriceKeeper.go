@@ -110,6 +110,31 @@ func (_m *PriceKeeper) InitGenesis(ctx types.Context, initPrice linotypes.MiniDo
 	return r0
 }
 
+// LastFeed provides a mock function with given fields: ctx, validator
+func (_m *PriceKeeper) LastFeed(ctx types.Context, validator linotypes.AccountKey) (*model.FedPrice, types.Error) {
+	ret := _m.Called(ctx, validator)
+
+	var r0 *model.FedPrice
+	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey) *model.FedPrice); ok {
+		r0 = rf(ctx, validator)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.FedPrice)
+		}
+	}
+
+	var r1 types.Error
+	if rf, ok := ret.Get(1).(func(types.Context, linotypes.AccountKey) types.Error); ok {
+		r1 = rf(ctx, validator)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(types.Error)
+		}
+	}
+
+	return r0, r1
+}
+
 // MiniDollarToCoin provides a mock function with given fields: ctx, dollar
 func (_m *PriceKeeper) MiniDollarToCoin(ctx types.Context, dollar linotypes.MiniDollar) (linotypes.Coin, linotypes.MiniDollar, types.Error) {
 	ret := _m.Called(ctx, dollar)

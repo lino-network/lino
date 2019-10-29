@@ -8,6 +8,7 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	// linotypes "github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/utils"
 	"github.com/lino-network/lino/x/global/types"
 )
 
@@ -21,6 +22,14 @@ func NewQuerier(gm GlobalKeeper) sdk.Querier {
 		// 	return queryTimeEventList(ctx, cdc, path[1:], req, gm)
 		case types.QueryGlobalTime:
 			return queryGlobalTime(ctx, cdc, path[1:], req, gm)
+		case types.QueryGlobalEventErrors:
+			return utils.NewQueryResolver(0, func(args ...string) (interface{}, sdk.Error) {
+				return gm.GetEventErrors(ctx), nil
+			})(ctx, cdc, path)
+		case types.QueryGlobalBCEventErrors:
+			return utils.NewQueryResolver(0, func(args ...string) (interface{}, sdk.Error) {
+				return gm.GetBCEventErrors(ctx), nil
+			})(ctx, cdc, path)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown global query endpoint")
 		}

@@ -7,6 +7,8 @@ const (
 	// QuerierRoute is the querier route for gov
 	QuerierRoute = ModuleName
 
-	QueryTimeEventList = "timeEventList"
-	QueryGlobalTime    = "globalTime"
+	QueryTimeEventList       = "timeEventList"
+	QueryGlobalTime          = "globalTime"
+	QueryGlobalEventErrors   = "eventErrors"
+	QueryGlobalBCEventErrors = "bcEventErrors"
 )
