@@ -17,7 +17,7 @@ var ValidateCmd = cosmoscli.ValidateCmd
 
 func parsePrivKey(key string) (crypto.PrivKey, error) {
 	var privKey crypto.PrivKey
-	privKeyBytes, err := hex.DecodeString(viper.GetString(FlagPrivKey))
+	privKeyBytes, err := hex.DecodeString(key)
 	if err != nil {
 		return privKey, err
 	}

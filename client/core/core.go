@@ -156,10 +156,11 @@ func (ctx CoreContext) BuildAndSign(msgs []sdk.Msg, optionalSigners ...OptionalS
 	if err != nil {
 		return nil, err
 	}
+
 	stdMsgs := []authtypes.StdSignMsg{primary}
 	privKeys := []crypto.PrivKey{ctx.PrivKey}
 	for _, signer := range optionalSigners {
-		msg, err := ctx.BuildSignMsg(msgs, ctx.Sequence)
+		msg, err := ctx.BuildSignMsg(msgs, signer.Seq)
 		if err != nil {
 			return nil, err
 		}
