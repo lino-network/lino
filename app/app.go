@@ -219,6 +219,7 @@ func MakeCodec() *wire.Codec {
 	devtypes.RegisterWire(cdc)
 	votetypes.RegisterWire(cdc)
 	valtypes.RegisterCodec(cdc)
+	pricetypes.RegisterCodec(cdc)
 	// proposal.RegisterWire(cdc)
 	registerEvent(cdc)
 
