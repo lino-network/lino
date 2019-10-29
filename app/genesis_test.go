@@ -79,9 +79,9 @@ func TestGetGenesisJson(t *testing.T) {
 			true,
 			param.GlobalAllocationParam{
 				GlobalGrowthRate:         types.NewDecFromRat(98, 1000),
-				ContentCreatorAllocation: types.NewDecFromRat(85, 100),
-				DeveloperAllocation:      types.NewDecFromRat(10, 100),
-				ValidatorAllocation:      types.NewDecFromRat(5, 100),
+				ContentCreatorAllocation: types.NewDecFromRat(10, 100),
+				DeveloperAllocation:      types.NewDecFromRat(70, 100),
+				ValidatorAllocation:      types.NewDecFromRat(20, 100),
 			},
 			param.VoteParam{
 				MinStakeIn:                     types.NewCoinFromInt64(1000 * types.Decimals),
@@ -190,7 +190,7 @@ func TestLinoBlockchainGenTx(t *testing.T) {
 	err = cdc.UnmarshalJSON(appGenTx, &genesisAcc)
 	assert.Nil(t, err)
 	assert.Equal(t, genesisAcc.Name, "lino")
-	assert.Equal(t, genesisAcc.Coin, types.NewCoinFromInt64(10000000000*types.Decimals))
+	assert.Equal(t, genesisAcc.Coin, types.NewCoinFromInt64(100000000*types.Decimals))
 	assert.Equal(t, genesisAcc.IsValidator, true)
 	assert.Equal(t, genesisAcc.ValPubKey, pk)
 	assert.Equal(t, validator.PubKey, pk)

@@ -398,9 +398,7 @@ func (lb *LinoBlockchain) toAppAccount(ctx sdk.Context, ga GenesisAccount) sdk.E
 // convert GenesisDeveloper to AppDeveloper
 func (lb *LinoBlockchain) toAppDeveloper(
 	ctx sdk.Context, developer GenesisAppDeveloper) sdk.Error {
-	// TODO(yumin): this is broke. App must first stake then it apply for app.
-	// this should be implemented after vote module is ready.
-	panic("Unimplemetend genesis to app developer")
+	// skipped.
 	// if !lb.accountManager.DoesAccountExist(ctx, types.AccountKey(developer.Name)) {
 	// 	return ErrGenesisFailed("genesis developer account doesn't exist")
 	// }
@@ -415,7 +413,7 @@ func (lb *LinoBlockchain) toAppDeveloper(
 	// 	developer.Description, developer.AppMetaData); err != nil {
 	// 	return err
 	// }
-	// return nil
+	return nil
 }
 
 // init process for a block, execute time events and fire incompetent validators
