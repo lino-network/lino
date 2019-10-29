@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -34,6 +35,7 @@ var (
 		Use:   "linocli",
 		Short: "Lino Blockchain CLI",
 	}
+	DefaultCLIHome = os.ExpandEnv("$HOME/.linocli")
 )
 
 func main() {
@@ -53,7 +55,7 @@ func main() {
 	rootCmd.AddCommand(
 		app.VersionCmd(),
 		rpc.StatusCommand(),
-		client.ConfigCmd(app.DefaultCLIHome),
+		client.ConfigCmd(DefaultCLIHome),
 		queryCmd(cdc),
 		txCmd(cdc),
 		client.LineBreak,
@@ -69,7 +71,7 @@ func main() {
 		},
 	)
 
-	executor := cli.PrepareMainCmd(rootCmd, "NS", app.DefaultCLIHome)
+	executor := cli.PrepareMainCmd(rootCmd, "NS", DefaultCLIHome)
 	err := executor.Execute()
 	if err != nil {
 		panic(err)
