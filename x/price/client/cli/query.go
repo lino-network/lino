@@ -1,7 +1,7 @@
 package cli
 
 import (
-	"fmt"
+	// "fmt"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -22,38 +22,21 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 	cmd.AddCommand(client.GetCommands(
-		getCmdCurrent(cdc),
-		getCmdHistory(cdc),
+		utils.SimpleQueryCmd(
+			"current",
+			"current",
+			types.QuerierRoute, types.QueryPriceCurrent,
+			0, &linotypes.MiniDollar{})(cdc),
+		utils.SimpleQueryCmd(
+			"history",
+			"history",
+			types.QuerierRoute, types.QueryPriceHistory,
+			0, &([]model.FeedHistory{}))(cdc),
+		utils.SimpleQueryCmd(
+			"last-feed <username>",
+			"last-feed <username>",
+			types.QuerierRoute, types.QueryLastFeed,
+			1, &model.FedPrice{})(cdc),
 	)...)
 	return cmd
-}
-
-// GetCmdCurrent -
-func getCmdCurrent(cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
-		Use:   "current",
-		Short: "current",
-		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			uri := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryPriceCurrent)
-			rst := linotypes.NewMiniDollar(0)
-			return utils.CLIQueryJSONPrint(cdc, uri, nil,
-				func() interface{} { return &rst })
-		},
-	}
-}
-
-// GetCmdHistory -
-func getCmdHistory(cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
-		Use:   "history",
-		Short: "history",
-		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			uri := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryPriceHistory)
-			rst := make([]model.FeedHistory, 0)
-			return utils.CLIQueryJSONPrint(cdc, uri, nil,
-				func() interface{} { return &rst })
-		},
-	}
 }

@@ -66,12 +66,14 @@ get_golangci_lint:
 lint:
 	GO111MODULE=$(GO111MODULE) golangci-lint run
 	GO111MODULE=$(GO111MODULE) go mod verify
+	GO111MODULE=$(GO111MODULE) go mod tidy
 
 lint-fix:
 	@echo "--> Running linter auto fix"
 	GO111MODULE=$(GO111MODULE) golangci-lint run --fix
 	GO111MODULE=$(GO111MODULE) find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" | xargs gofmt -d -s
 	GO111MODULE=$(GO111MODULE) go mod verify
+	GO111MODULE=$(GO111MODULE) go mod tidy
 
 .PHONY: lint lint-fix
 

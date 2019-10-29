@@ -13,4 +13,5 @@ const (
 	// query stores
 	QueryPriceCurrent = "current"
 	QueryPriceHistory = "history"
+	QueryLastFeed     = "lastFeed"
 )

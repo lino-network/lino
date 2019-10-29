@@ -174,6 +174,10 @@ func (wm WeightedMedianPriceManager) HistoryPrice(ctx sdk.Context) []model.FeedH
 	return wm.store.GetFeedHistory(ctx)
 }
 
+func (wm WeightedMedianPriceManager) LastFeed(ctx sdk.Context, validator linotypes.AccountKey) (*model.FedPrice, sdk.Error) {
+	return wm.store.GetFedPrice(ctx, validator)
+}
+
 func (wm WeightedMedianPriceManager) isValidator(ctx sdk.Context, user linotypes.AccountKey) bool {
 	vals := wm.val.GetCommittingValidators(ctx)
 	return linotypes.FindAccountInList(user, vals) != -1

@@ -34,4 +34,5 @@ type PriceKeeper interface {
 	// Getters
 	CurrPrice(ctx sdk.Context) (linotypes.MiniDollar, sdk.Error)
 	HistoryPrice(ctx sdk.Context) []model.FeedHistory
+	LastFeed(ctx sdk.Context, validator linotypes.AccountKey) (*model.FedPrice, sdk.Error)
 }

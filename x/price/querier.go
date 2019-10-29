@@ -8,6 +8,7 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	linotypes "github.com/lino-network/lino/types"
+	"github.com/lino-network/lino/utils"
 	"github.com/lino-network/lino/x/price/types"
 )
 
@@ -18,38 +19,19 @@ func NewQuerier(pm PriceKeeper) sdk.Querier {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err sdk.Error) {
 		switch path[0] {
 		case types.QueryPriceCurrent:
-			return queryPriceCurrent(ctx, cdc, path[1:], req, pm)
+			return utils.NewQueryResolver(0, func(args ...string) (interface{}, sdk.Error) {
+				return pm.CurrPrice(ctx)
+			})(ctx, cdc, path)
 		case types.QueryPriceHistory:
-			return queryPriceHistory(ctx, cdc, path[1:], req, pm)
+			return utils.NewQueryResolver(0, func(args ...string) (interface{}, sdk.Error) {
+				return pm.HistoryPrice(ctx), nil
+			})(ctx, cdc, path)
+		case types.QueryLastFeed:
+			return utils.NewQueryResolver(1, func(args ...string) (interface{}, sdk.Error) {
+				return pm.LastFeed(ctx, linotypes.AccountKey(args[0]))
+			})(ctx, cdc, path)
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown query endpoint:" + strings.Join(path, "/"))
 		}
 	}
-}
-
-func queryPriceCurrent(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, pm PriceKeeper) ([]byte, sdk.Error) {
-	if err := linotypes.CheckPathContentAndMinLength(path, 0); err != nil {
-		return nil, err
-	}
-	price, err := pm.CurrPrice(ctx)
-	if err != nil {
-		return nil, err
-	}
-	res, marshalErr := cdc.MarshalJSON(price)
-	if marshalErr != nil {
-		return nil, linotypes.ErrQueryFailed(marshalErr.Error())
-	}
-	return res, nil
-}
-
-func queryPriceHistory(ctx sdk.Context, cdc *wire.Codec, path []string, req abci.RequestQuery, pm PriceKeeper) ([]byte, sdk.Error) {
-	if err := linotypes.CheckPathContentAndMinLength(path, 0); err != nil {
-		return nil, err
-	}
-	price := pm.HistoryPrice(ctx)
-	res, marshalErr := cdc.MarshalJSON(price)
-	if marshalErr != nil {
-		return nil, linotypes.ErrQueryFailed(marshalErr.Error())
-	}
-	return res, nil
 }
