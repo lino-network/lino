@@ -7,6 +7,17 @@ import (
 	"os"
 	"sync"
 
+	bam "github.com/cosmos/cosmos-sdk/baseapp"
+	wire "github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	cauth "github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/spf13/viper"
+	abci "github.com/tendermint/tendermint/abci/types"
+	tmcli "github.com/tendermint/tendermint/libs/cli"
+	"github.com/tendermint/tendermint/libs/log"
+	tmtypes "github.com/tendermint/tendermint/types"
+	dbm "github.com/tendermint/tm-db"
+
 	"github.com/lino-network/lino/param"
 	"github.com/lino-network/lino/types"
 	acc "github.com/lino-network/lino/x/account"
@@ -29,26 +40,13 @@ import (
 	price "github.com/lino-network/lino/x/price"
 	pricemn "github.com/lino-network/lino/x/price/manager"
 	pricetypes "github.com/lino-network/lino/x/price/types"
-	votemn "github.com/lino-network/lino/x/vote/manager"
-	votetypes "github.com/lino-network/lino/x/vote/types"
-
-	// "github.com/lino-network/lino/x/proposal"
-
 	rep "github.com/lino-network/lino/x/reputation"
 	val "github.com/lino-network/lino/x/validator"
 	valmn "github.com/lino-network/lino/x/validator/manager"
 	valtypes "github.com/lino-network/lino/x/validator/types"
 	vote "github.com/lino-network/lino/x/vote"
-
-	wire "github.com/cosmos/cosmos-sdk/codec"
-	"github.com/tendermint/tendermint/libs/log"
-
-	bam "github.com/cosmos/cosmos-sdk/baseapp"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	cauth "github.com/cosmos/cosmos-sdk/x/auth"
-	abci "github.com/tendermint/tendermint/abci/types"
-	tmtypes "github.com/tendermint/tendermint/types"
-	dbm "github.com/tendermint/tm-db"
+	votemn "github.com/lino-network/lino/x/vote/manager"
+	votetypes "github.com/lino-network/lino/x/vote/types"
 )
 
 const (
@@ -68,7 +66,6 @@ const (
 
 // default home directories for expected binaries
 var (
-	DefaultCLIHome  = os.ExpandEnv("$HOME/.linocli")
 	DefaultNodeHome = os.ExpandEnv("$HOME/.lino")
 )
 
@@ -567,7 +564,7 @@ func (lb *LinoBlockchain) getImportExportModules() []importExportModule {
 func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
 	ctx := lb.NewContext(true, abci.Header{})
 
-	exportPath := DefaultNodeHome + "/" + currStateFolder
+	exportPath := lb.GetHomeDir() + "/" + currStateFolder
 	err = os.MkdirAll(exportPath, os.ModePerm)
 	if err != nil {
 		panic("failed to create export dir due to: " + err.Error())
@@ -600,7 +597,7 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 
 // ImportFromFiles Custom logic for state export
 func (lb *LinoBlockchain) ImportFromFiles(ctx sdk.Context) {
-	prevStateDir := DefaultNodeHome + "/" + prevStateFolder
+	prevStateDir := lb.GetHomeDir() + "/" + prevStateFolder
 
 	modules := lb.getImportExportModules()
 	for _, toImport := range modules {
@@ -611,4 +608,8 @@ func (lb *LinoBlockchain) ImportFromFiles(ctx sdk.Context) {
 		}
 		ctx.Logger().Info(fmt.Sprintf("imported: %s state", toImport.filename))
 	}
+}
+
+func (lb *LinoBlockchain) GetHomeDir() string {
+	return viper.GetString(tmcli.HomeFlag)
 }
