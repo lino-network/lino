@@ -118,7 +118,7 @@ func LinoBlockchainGenTx(cdc *wire.Codec, pk crypto.PubKey) (
 	fmt.Println("tx private key is:", strings.ToUpper(hex.EncodeToString(txKey.Bytes())))
 	fmt.Println("sign private key is:", strings.ToUpper(hex.EncodeToString(signKey.Bytes())))
 
-	totalCoin := types.NewCoinFromInt64(10000000000 * types.Decimals)
+	totalCoin := types.NewCoinFromInt64(100000000 * types.Decimals)
 	genesisAcc := GenesisAccount{
 		Name:        "lino",
 		Coin:        totalCoin,
@@ -137,7 +137,7 @@ func LinoBlockchainGenTx(cdc *wire.Codec, pk crypto.PubKey) (
 
 	validator = tmtypes.GenesisValidator{
 		PubKey: pk,
-		Power:  1000,
+		Power:  200000,
 	}
 	return
 }
@@ -178,9 +178,9 @@ func LinoBlockchainGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (appSt
 			true,
 			param.GlobalAllocationParam{
 				GlobalGrowthRate:         types.NewDecFromRat(98, 1000),
-				ContentCreatorAllocation: types.NewDecFromRat(65, 100),
-				DeveloperAllocation:      types.NewDecFromRat(10, 100),
-				ValidatorAllocation:      types.NewDecFromRat(5, 100),
+				ContentCreatorAllocation: types.NewDecFromRat(10, 100),
+				DeveloperAllocation:      types.NewDecFromRat(70, 100),
+				ValidatorAllocation:      types.NewDecFromRat(20, 100),
 			},
 			param.VoteParam{
 				MinStakeIn:                     types.NewCoinFromInt64(1000 * types.Decimals),
@@ -278,7 +278,7 @@ func LinoBlockchainGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (appSt
 		genesisState.Accounts = append(genesisState.Accounts, genesisAcc)
 	}
 	genesisAppDeveloper := GenesisAppDeveloper{
-		Name:        "lino",
+		Name:        "linoapp",
 		Website:     "https://lino.network/",
 		Description: "",
 		AppMetaData: "",
