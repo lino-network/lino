@@ -1,9 +1,7 @@
 package main
 
 import (
-	"fmt"
 	"os"
-	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
@@ -59,16 +57,8 @@ func main() {
 		queryCmd(cdc),
 		txCmd(cdc),
 		client.LineBreak,
-		&cobra.Command{
-			Use:   "now",
-			Short: "now",
-			Args:  cobra.NoArgs,
-			RunE: func(cmd *cobra.Command, args []string) error {
-				str, _ := cdc.MarshalJSON(time.Now())
-				fmt.Println(string(str))
-				return nil
-			},
-		},
+		linoclient.GetNowCmd(cdc),
+		linoclient.GetGenAddrCmd(cdc),
 	)
 
 	executor := cli.PrepareMainCmd(rootCmd, "NS", DefaultCLIHome)
