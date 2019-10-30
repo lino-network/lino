@@ -17,11 +17,12 @@ import (
 )
 
 const (
-	FlagTo      = "to"
-	FlagAmount  = "amount"
-	FlagMemo    = "memo"
-	FlagByAddr  = "by-addr"
-	FlagAddrSeq = "addr-seq"
+	FlagTo          = "to"
+	FlagAmount      = "amount"
+	FlagMemo        = "memo"
+	FlagAddr        = "addr"
+	FlagAddrSeq     = "addr-seq"
+	FlagAddrPrivKey = "addr-priv-key"
 )
 
 func GetTxCmd(cdc *codec.Codec) *cobra.Command {
@@ -34,19 +35,19 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 	}
 
 	cmd.AddCommand(client.PostCommands(
-		// GetCmdRegister(cdc),
+		GetCmdRegister(cdc),
 		getCmdTransferV2(cdc),
 	)...)
 
 	return cmd
 }
 
-// GetCmdRegister - register as developer.
+// GetCmdRegister - register a new user with random generated private keys.
 func GetCmdRegister(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "register <referrer> <amount> <name>",
-		Short: "register <referrer> <amount> <name> --by-addr=true/false",
-		Args:  cobra.ExactArgs(3),
+		Use:   "register <type:referrer> --amount <amount> --name <name>",
+		Short: "register <type:referrer> --amount <amount> --name <name>",
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := client.NewCoreContextFromViper().WithTxEncoder(linotypes.TxEncoder(cdc))
 			referrerArg := args[0]
@@ -62,14 +63,10 @@ func GetCmdRegister(cdc *codec.Codec) *cobra.Command {
 			fmt.Println(
 				"signing private key hex-encoded:",
 				strings.ToUpper(hex.EncodeToString(signPriv.Bytes())))
-			isAddr := viper.GetBool(FlagByAddr)
-			var referrer linotypes.AccOrAddr
-			if isAddr {
-				referrer = linotypes.NewAccOrAddrFromAcc(linotypes.AccountKey(referrerArg))
-			} else {
-				referrer = linotypes.NewAccOrAddrFromAddr(sdk.AccAddress(referrerArg))
+			referrer, err := parseAccOrAddr(referrerArg)
+			if err != nil {
+				return err
 			}
-
 			msg := types.RegisterV2Msg{
 				Referrer:             referrer,
 				NewUser:              username,
@@ -84,14 +81,54 @@ func GetCmdRegister(cdc *codec.Codec) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().Bool(FlagByAddr, false, "register referrer is an address")
 	// always 0, in this cmd.
 	// cmd.Flags().Uint64(FlagAddrSeq, 0, "sequence# of the new transaction key")
 	return cmd
 }
 
-// TODO(yumin):
-// Add an addition CLI to support register an account for an existing address.
+// GetCmdBin - register as developer.
+func GetCmdBind(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "bind <type:referrer>",
+		Short: "bind <type:referrer> --addr <addr> --addr-priv-key <hex> --addr-seq <seq> --name <name> --amount <amount>",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := client.NewCoreContextFromViper().WithTxEncoder(linotypes.TxEncoder(cdc))
+			referrerArg := args[0]
+			amount := args[1]
+			username := linotypes.AccountKey(args[2])
+
+			txPriv := secp256k1.GenPrivKey()
+			signPriv := secp256k1.GenPrivKey()
+
+			fmt.Println(
+				"tx private hex-encoded:",
+				strings.ToUpper(hex.EncodeToString(txPriv.Bytes())))
+			fmt.Println(
+				"signing private key hex-encoded:",
+				strings.ToUpper(hex.EncodeToString(signPriv.Bytes())))
+			referrer, err := parseAccOrAddr(referrerArg)
+			if err != nil {
+				return err
+			}
+			msg := types.RegisterV2Msg{
+				Referrer:             referrer,
+				NewUser:              username,
+				RegisterFee:          amount,
+				NewTransactionPubKey: txPriv.PubKey(),
+				NewSigningPubKey:     signPriv.PubKey(),
+			}
+			return ctx.DoTxPrintResponse(msg, client.OptionalSigner{
+				PrivKey: txPriv,
+				Seq:     0,
+			})
+		},
+	}
+
+	// always 0, in this cmd.
+	// cmd.Flags().Uint64(FlagAddrSeq, 0, "sequence# of the new transaction key")
+	return cmd
+}
 
 // GetCmdTransferV2 -
 func getCmdTransferV2(cdc *codec.Codec) *cobra.Command {
