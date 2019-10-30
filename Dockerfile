@@ -11,8 +11,8 @@ RUN make get_tools
 RUN make install
 
 RUN lino init
-COPY genesis/upgrade3/config.toml  /root/.lino/config/config.toml
-COPY genesis/upgrade3/genesis.json /root/.lino/config/genesis.json
+COPY genesis/upgrade5/config.toml  /root/.lino/config/config.toml
+COPY genesis/upgrade5/genesis.json /root/.lino/config/genesis.json
 RUN cd /root/.lino && wget https://lino-blockchain-opendata.s3.amazonaws.com/prd/prevstates.tar.gz
 RUN cd /root/.lino && tar -xf prevstates.tar.gz
 
