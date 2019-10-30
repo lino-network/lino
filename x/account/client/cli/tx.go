@@ -35,7 +35,7 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 
 	cmd.AddCommand(client.PostCommands(
 		// GetCmdRegister(cdc),
-		GetCmdTransfer(cdc),
+		getCmdTransferV2(cdc),
 	)...)
 
 	return cmd
@@ -93,19 +93,26 @@ func GetCmdRegister(cdc *codec.Codec) *cobra.Command {
 // TODO(yumin):
 // Add an addition CLI to support register an account for an existing address.
 
-// GetCmdTransfer -
-func GetCmdTransfer(cdc *codec.Codec) *cobra.Command {
+// GetCmdTransferV2 -
+func getCmdTransferV2(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "transfer",
-		Short: "transfer <from> --to <bar> --amount <amount> --memo memo",
+		Short: "transfer <type:from> --to <type:to> --amount <amount> --memo memo, See help for type",
+		Long:  "type is either 'addr' or 'user', e.g. transfer addr:lino158de3... --to user:yxia --amount 10 --memo 'demo'",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := client.NewCoreContextFromViper().WithTxEncoder(linotypes.TxEncoder(cdc))
-			from := linotypes.AccountKey(args[0])
-			to := linotypes.AccountKey(viper.GetString(FlagTo))
+			from, err := parseAccOrAddr(args[0])
+			if err != nil {
+				return err
+			}
+			to, err := parseAccOrAddr(viper.GetString(FlagTo))
+			if err != nil {
+				return err
+			}
 			amount := viper.GetString(FlagAmount)
 			memo := viper.GetString(FlagMemo)
-			msg := types.TransferMsg{
+			msg := types.TransferV2Msg{
 				Sender:   from,
 				Receiver: to,
 				Amount:   amount,
@@ -120,4 +127,20 @@ func GetCmdTransfer(cdc *codec.Codec) *cobra.Command {
 	_ = cmd.MarkFlagRequired(FlagTo)
 	_ = cmd.MarkFlagRequired(FlagAmount)
 	return cmd
+}
+
+func parseAccOrAddr(s string) (rst linotypes.AccOrAddr, err error) {
+	comps := strings.Split(s, ":")
+	if len(comps) != 2 || !(comps[0] == "addr" || comps[0] == "user") {
+		return rst, fmt.Errorf("invalid param: %s", s)
+	}
+	if comps[0] == "addr" {
+		addr, err := sdk.AccAddressFromBech32(comps[1])
+		if err != nil {
+			return rst, err
+		}
+		return linotypes.NewAccOrAddrFromAddr(addr), nil
+	} else {
+		return linotypes.NewAccOrAddrFromAcc(linotypes.AccountKey(comps[1])), nil
+	}
 }
