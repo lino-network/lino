@@ -2,6 +2,8 @@ package client
 
 import (
 	"encoding/hex"
+	"fmt"
+	"os"
 
 	cosmoscli "github.com/cosmos/cosmos-sdk/client"
 	"github.com/spf13/cobra"
@@ -11,11 +13,21 @@ import (
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 
 	"github.com/lino-network/lino/client/core"
+	"github.com/lino-network/lino/client/encrypt"
 )
 
 var ValidateCmd = cosmoscli.ValidateCmd
 
 func ParsePrivKey(key string) (crypto.PrivKey, error) {
+	// @ tag means that priv-key is encrypted in the file.
+	if key[0] == '@' {
+		bytes, err := encrypt.DecryptByStdin(key[1:])
+		if err != nil {
+			exitWith("Failed to decrypt file: %s", err)
+		}
+		key = string(bytes)
+	}
+
 	var privKey crypto.PrivKey
 	privKeyBytes, err := hex.DecodeString(key)
 	if err != nil {
@@ -37,7 +49,7 @@ func NewCoreContextFromViper() core.CoreContext {
 
 	seq := viper.GetInt64(FlagSequence)
 	if seq < 0 {
-		panic("Missing --" + FlagSequence)
+		exitWith("Missing --" + FlagSequence)
 	}
 
 	ctx := core.CoreContext{
@@ -52,21 +64,16 @@ func NewCoreContextFromViper() core.CoreContext {
 	}
 	ctx = ctx.WithFees(viper.GetString(FlagFees))
 
-	hasKey := false
-	for _, keyFlag := range []string{FlagPrivKey} {
-		key := viper.GetString(keyFlag)
-		if key != "" {
-			pk, err := ParsePrivKey(key)
-			if err != nil {
-				panic(err)
-			}
-			hasKey = true
-			ctx = ctx.WithPrivKey(pk)
-		}
+	privKey := viper.GetString(FlagPrivKey)
+	if len(privKey) == 0 {
+		exitWith("Missing --" + FlagPrivKey)
 	}
-	if !hasKey {
-		panic("Missing --" + FlagPrivKey)
+
+	pk, err := ParsePrivKey(privKey)
+	if err != nil {
+		exitWith("Invalid PrivKey: %s", err)
 	}
+	ctx = ctx.WithPrivKey(pk)
 	return ctx
 }
 
@@ -90,3 +97,8 @@ func NewCoreBroadcastContextFromViper() core.CoreContext {
 }
 
 type CommandTxCallback func(cmd *cobra.Command, args []string) error
+
+func exitWith(s string, args ...interface{}) {
+	fmt.Printf(s+"\n", args...)
+	os.Exit(1)
+}
