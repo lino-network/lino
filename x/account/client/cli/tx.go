@@ -94,8 +94,8 @@ func getCmdRegister(cdc *codec.Codec) *cobra.Command {
 func getCmdBind(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "bind <type:referrer>",
-		Short: "bind <type:referrer> --addr <addr> --addr-priv-key <hex> --addr-seq <seq> --name <name> --reg-fee <amount>",
-		Long:  "bind <type:referrer> --addr <addr> --addr-priv-key <hex> --addr-seq <seq> --name <name> --reg-fee <amount> will bind <addr> with <name> as username. The signing key will be the same as transaction key.",
+		Short: "bind <type:referrer> --addr <addr> --addr-priv-key <key> --addr-seq <seq> --name <name> --reg-fee <amount>",
+		Long:  "bind <type:referrer> --addr <addr> --addr-priv-key <key> --addr-seq <seq> --name <name> --reg-fee <amount> will bind <addr> with <name> as username. The signing key will be the same as transaction key.",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := client.NewCoreContextFromViper().WithTxEncoder(linotypes.TxEncoder(cdc))
