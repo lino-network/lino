@@ -15,7 +15,7 @@ import (
 
 var ValidateCmd = cosmoscli.ValidateCmd
 
-func parsePrivKey(key string) (crypto.PrivKey, error) {
+func ParsePrivKey(key string) (crypto.PrivKey, error) {
 	var privKey crypto.PrivKey
 	privKeyBytes, err := hex.DecodeString(key)
 	if err != nil {
@@ -56,7 +56,7 @@ func NewCoreContextFromViper() core.CoreContext {
 	for _, keyFlag := range []string{FlagPrivKey} {
 		key := viper.GetString(keyFlag)
 		if key != "" {
-			pk, err := parsePrivKey(key)
+			pk, err := ParsePrivKey(key)
 			if err != nil {
 				panic(err)
 			}

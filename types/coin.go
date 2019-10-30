@@ -147,3 +147,8 @@ func (coin Coin) Minus(coinB Coin) Coin {
 func (coin Coin) Neg() Coin {
 	return Coin{coin.Amount.Neg()}
 }
+
+// ToLino - return LINO str
+func (coin Coin) ToLino() LNO {
+	return coin.Amount.QuoRaw(Decimals).String()
+}
