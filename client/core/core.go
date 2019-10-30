@@ -11,6 +11,7 @@ import (
 	"github.com/tendermint/tendermint/crypto"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
+	ttypes "github.com/tendermint/tendermint/types"
 )
 
 // BroadcastTx - broadcast the transaction bytes to Tendermint
@@ -102,6 +103,8 @@ func (ctx CoreContext) SignBuildBroadcast(msgs []sdk.Msg, optionalSigners ...Opt
 	if err != nil {
 		return sdk.TxResponse{}, err
 	}
+	fmt.Printf("broadcasting tx: %s\n",
+		strings.ToUpper(hex.EncodeToString(ttypes.Tx(txBytes).Hash())))
 	return ctx.BroadcastTx(txBytes)
 }
 
