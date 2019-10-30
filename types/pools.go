@@ -17,3 +17,16 @@ const (
 	// developer
 	DevIDAReservePool PoolName = "dev/ida-reserve-pool"
 )
+
+func ListPools() []PoolName {
+	return []PoolName{
+		InflationDeveloperPool,
+		InflationValidatorPool,
+		InflationConsumptionPool,
+		AccountVestingPool,
+		VoteStakeInPool,
+		VoteStakeReturnPool,
+		VoteFrictionPool,
+		DevIDAReservePool,
+	}
+}

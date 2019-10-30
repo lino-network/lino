@@ -1,9 +1,10 @@
 package cli
 
 import (
-	// "fmt"
+	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/spf13/cobra"
 
@@ -43,15 +44,43 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 			types.QuerierRoute, types.QueryAccountMeta,
 			1, &model.AccountMeta{})(cdc),
 		utils.SimpleQueryCmd(
-			"pool <poolname>",
-			"pool <poolname>",
-			types.QuerierRoute, types.QueryPool,
-			1, &linotypes.Coin{})(cdc),
-		utils.SimpleQueryCmd(
 			"supply",
 			"supply",
 			types.QuerierRoute, types.QuerySupply,
 			0, &model.Supply{})(cdc),
+		getQueryPoolCmds(cdc),
 	)...)
 	return cmd
+}
+
+// getQueryPoolCmds - return a commands that queries the pool.
+func getQueryPoolCmds(cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "pool [poolname]",
+		Short: "pool prints balance of all pools, if not specified, unit: LINO",
+		Args:  cobra.MaximumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			poolnames := linotypes.ListPools()
+			if len(args) == 1 {
+				poolnames = []linotypes.PoolName{linotypes.PoolName(args[0])}
+			}
+
+			fmt.Printf("|%-25s|%-10s|\n", "Pool Name", "LINO")
+			for _, poolname := range poolnames {
+				uri := fmt.Sprintf("custom/%s/%s/%s",
+					types.QuerierRoute, types.QueryPool, poolname)
+				res, _, err := cliCtx.QueryWithData(uri, nil)
+				if err != nil {
+					fmt.Printf("Failed to Query and Print: %s, because %s", uri, err)
+					return nil
+				}
+				rst := &linotypes.Coin{}
+				cdc.MustUnmarshalJSON(res, rst)
+				fmt.Printf("|%-25s|%-10s|\n", poolname, rst.ToLino())
+			}
+			return nil
+		},
+	}
 }
