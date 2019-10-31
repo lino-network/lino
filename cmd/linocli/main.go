@@ -58,7 +58,10 @@ func main() {
 		txCmd(cdc),
 		client.LineBreak,
 		linoclient.GetNowCmd(cdc),
-		linoclient.GetGenAddrCmd(cdc),
+		linoclient.GetGenAddrCmd(),
+		linoclient.GetAddrOfCmd(),
+		linoclient.GetEncryptPrivKey(),
+		client.LineBreak,
 	)
 
 	executor := cli.PrepareMainCmd(rootCmd, "NS", DefaultCLIHome)
