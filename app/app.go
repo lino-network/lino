@@ -169,6 +169,7 @@ func NewLinoBlockchain(
 		AddRoute(posttypes.RouterKey, post.NewHandler(lb.postManager)).
 		AddRoute(votetypes.RouterKey, vote.NewHandler(lb.voteManager)).
 		AddRoute(devtypes.RouterKey, dev.NewHandler(lb.developerManager)).
+		AddRoute(pricetypes.RouterKey, price.NewHandler(lb.priceManager)).
 		// AddRoute(proposal.RouterKey, proposal.NewHandler(
 		// 	lb.accountManager, lb.proposalManager, lb.postManager, &lb.globalManager, lb.voteManager)).
 		AddRoute(val.RouterKey, val.NewHandler(lb.valManager))
