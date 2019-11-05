@@ -92,11 +92,9 @@ func TestVoteParam(t *testing.T) {
 	ph := NewParamHolder(TestKVStoreKey)
 	ctx := getContext()
 	parameter := VoteParam{
-		MinStakeIn:                     types.NewCoinFromInt64(1000 * types.Decimals),
-		VoterCoinReturnIntervalSec:     int64(7 * 24 * 3600),
-		VoterCoinReturnTimes:           int64(7),
-		DelegatorCoinReturnIntervalSec: int64(7 * 24 * 3600),
-		DelegatorCoinReturnTimes:       int64(7),
+		MinStakeIn:                 types.NewCoinFromInt64(1000 * types.Decimals),
+		VoterCoinReturnIntervalSec: int64(7 * 24 * 3600),
+		VoterCoinReturnTimes:       int64(7),
 	}
 	err := ph.setVoteParam(ctx, &parameter)
 	assert.Nil(t, err)
@@ -133,20 +131,6 @@ func TestProposalParam(t *testing.T) {
 	assert.Equal(t, parameter, *resultPtr, "Proposal param should be equal")
 }
 
-func TestCoinDayParam(t *testing.T) {
-	ph := NewParamHolder(TestKVStoreKey)
-	ctx := getContext()
-	parameter := CoinDayParam{
-		SecondsToRecoverCoinDay: int64(7 * 24 * 3600),
-	}
-	err := ph.setCoinDayParam(ctx, &parameter)
-	assert.Nil(t, err)
-
-	resultPtr, err := ph.GetCoinDayParam(ctx)
-	assert.Nil(t, err)
-	assert.Equal(t, parameter, *resultPtr, "Coin day param should be equal")
-}
-
 func TestBandwidthParam(t *testing.T) {
 	ph := NewParamHolder(TestKVStoreKey)
 	ctx := getContext()
@@ -178,10 +162,9 @@ func TestAccountParam(t *testing.T) {
 	ph := NewParamHolder(TestKVStoreKey)
 	ctx := getContext()
 	parameter := AccountParam{
-		MinimumBalance:               types.NewCoinFromInt64(1 * types.Decimals),
-		RegisterFee:                  types.NewCoinFromInt64(1 * types.Decimals),
-		FirstDepositFullCoinDayLimit: types.NewCoinFromInt64(1 * types.Decimals),
-		MaxNumFrozenMoney:            10,
+		MinimumBalance:    types.NewCoinFromInt64(1 * types.Decimals),
+		RegisterFee:       types.NewCoinFromInt64(1 * types.Decimals),
+		MaxNumFrozenMoney: 10,
 	}
 	err := ph.setAccountParam(ctx, &parameter)
 	assert.Nil(t, err)
@@ -229,11 +212,9 @@ func TestInitParam(t *testing.T) {
 	}
 
 	voteParam := VoteParam{
-		MinStakeIn:                     types.NewCoinFromInt64(1000 * types.Decimals),
-		VoterCoinReturnIntervalSec:     int64(7 * 24 * 3600),
-		VoterCoinReturnTimes:           int64(7),
-		DelegatorCoinReturnIntervalSec: int64(7 * 24 * 3600),
-		DelegatorCoinReturnTimes:       int64(7),
+		MinStakeIn:                 types.NewCoinFromInt64(1000 * types.Decimals),
+		VoterCoinReturnIntervalSec: int64(7 * 24 * 3600),
+		VoterCoinReturnTimes:       int64(7),
 	}
 	proposalParam := ProposalParam{
 		ContentCensorshipDecideSec:  int64(7 * 24 * 3600),
@@ -253,9 +234,6 @@ func TestInitParam(t *testing.T) {
 		ProtocolUpgradeMinDeposit: types.NewCoinFromInt64(1000000 * types.Decimals),
 	}
 
-	coinDayParam := CoinDayParam{
-		SecondsToRecoverCoinDay: int64(7 * 24 * 3600),
-	}
 	bandwidthParam := BandwidthParam{
 		SecondsToRecoverBandwidth:   int64(7 * 24 * 3600),
 		CapacityUsagePerTransaction: types.NewCoinFromInt64(1 * types.Decimals),
@@ -273,16 +251,11 @@ func TestInitParam(t *testing.T) {
 		AppPunishmentFactor:         types.NewDecFromRat(14, 5),
 	}
 	accountParam := AccountParam{
-		MinimumBalance:               types.NewCoinFromInt64(0),
-		RegisterFee:                  types.NewCoinFromInt64(1 * types.Decimals),
-		FirstDepositFullCoinDayLimit: types.NewCoinFromInt64(1 * types.Decimals),
-		MaxNumFrozenMoney:            10,
+		MinimumBalance:    types.NewCoinFromInt64(0),
+		RegisterFee:       types.NewCoinFromInt64(1 * types.Decimals),
+		MaxNumFrozenMoney: 10,
 	}
-	postParam := PostParam{
-		ReportOrUpvoteIntervalSec: int64(24 * 3600),
-		PostIntervalSec:           int64(600),
-		MaxReportReputation:       types.NewCoinFromInt64(100 * types.Decimals),
-	}
+	postParam := PostParam{}
 	repParam := ReputationParam{
 		BestContentIndexN: 200,
 		UserMaxN:          50,
@@ -297,7 +270,7 @@ func TestInitParam(t *testing.T) {
 
 	checkStorage(t, ctx, ph, globalAllocationParam,
 		developerParam, validatorParam, voteParam,
-		proposalParam, coinDayParam, bandwidthParam, accountParam, postParam, repParam, priceParam)
+		proposalParam, bandwidthParam, accountParam, postParam, repParam, priceParam)
 }
 
 func TestInitParamFromConfig(t *testing.T) {
@@ -333,11 +306,9 @@ func TestInitParamFromConfig(t *testing.T) {
 	}
 
 	voteParam := VoteParam{
-		MinStakeIn:                     types.NewCoinFromInt64(1000 * types.Decimals),
-		VoterCoinReturnIntervalSec:     int64(7 * 24 * 3600),
-		VoterCoinReturnTimes:           int64(7),
-		DelegatorCoinReturnIntervalSec: int64(7 * 24 * 3600),
-		DelegatorCoinReturnTimes:       int64(7),
+		MinStakeIn:                 types.NewCoinFromInt64(1000 * types.Decimals),
+		VoterCoinReturnIntervalSec: int64(7 * 24 * 3600),
+		VoterCoinReturnTimes:       int64(7),
 	}
 	proposalParam := ProposalParam{
 		ContentCensorshipDecideSec:  int64(7 * 24 * 3600),
@@ -357,9 +328,6 @@ func TestInitParamFromConfig(t *testing.T) {
 		ProtocolUpgradeMinDeposit: types.NewCoinFromInt64(1000000 * types.Decimals),
 	}
 
-	coinDayParam := CoinDayParam{
-		SecondsToRecoverCoinDay: int64(7 * 24 * 3600),
-	}
 	bandwidthParam := BandwidthParam{
 		SecondsToRecoverBandwidth:   int64(7 * 24 * 3600),
 		CapacityUsagePerTransaction: types.NewCoinFromInt64(1 * types.Decimals),
@@ -377,16 +345,11 @@ func TestInitParamFromConfig(t *testing.T) {
 		AppPunishmentFactor:         types.NewDecFromRat(14, 5),
 	}
 	accountParam := AccountParam{
-		MinimumBalance:               types.NewCoinFromInt64(0),
-		RegisterFee:                  types.NewCoinFromInt64(1 * types.Decimals),
-		FirstDepositFullCoinDayLimit: types.NewCoinFromInt64(1 * types.Decimals),
-		MaxNumFrozenMoney:            10,
+		MinimumBalance:    types.NewCoinFromInt64(0),
+		RegisterFee:       types.NewCoinFromInt64(1 * types.Decimals),
+		MaxNumFrozenMoney: 10,
 	}
-	postParam := PostParam{
-		ReportOrUpvoteIntervalSec: int64(24 * 3600),
-		PostIntervalSec:           int64(600),
-		MaxReportReputation:       types.NewCoinFromInt64(100 * types.Decimals),
-	}
+	postParam := PostParam{}
 	repParam := ReputationParam{
 		BestContentIndexN: 200,
 		UserMaxN:          40,
@@ -405,7 +368,6 @@ func TestInitParamFromConfig(t *testing.T) {
 		validatorParam,
 		voteParam,
 		proposalParam,
-		coinDayParam,
 		bandwidthParam,
 		accountParam,
 		repParam,
@@ -415,13 +377,13 @@ func TestInitParamFromConfig(t *testing.T) {
 
 	checkStorage(t, ctx, ph, globalAllocationParam,
 		developerParam, validatorParam, voteParam,
-		proposalParam, coinDayParam, bandwidthParam, accountParam, postParam, repParam, priceParam)
+		proposalParam, bandwidthParam, accountParam, postParam, repParam, priceParam)
 }
 
 func checkStorage(t *testing.T, ctx sdk.Context, ph ParamHolder, expectGlobalAllocationParam GlobalAllocationParam,
 	expectDeveloperParam DeveloperParam,
 	expectValidatorParam ValidatorParam, expectVoteParam VoteParam,
-	expectProposalParam ProposalParam, expectCoinDayParam CoinDayParam,
+	expectProposalParam ProposalParam,
 	expectBandwidthParam BandwidthParam, expectAccountParam AccountParam,
 	expectPostParam PostParam,
 	expectedRepParam ReputationParam,
@@ -443,10 +405,6 @@ func checkStorage(t *testing.T, ctx sdk.Context, ph ParamHolder, expectGlobalAll
 	proposalParam, err := ph.GetProposalParam(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, expectProposalParam, *proposalParam)
-
-	coinDayParam, err := ph.GetCoinDayParam(ctx)
-	assert.Nil(t, err)
-	assert.Equal(t, expectCoinDayParam, *coinDayParam)
 
 	bandwidthParam, err := ph.GetBandwidthParam(ctx)
 	assert.Nil(t, err)

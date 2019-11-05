@@ -84,11 +84,9 @@ func TestGetGenesisJson(t *testing.T) {
 				ValidatorAllocation:      types.NewDecFromRat(20, 100),
 			},
 			param.VoteParam{
-				MinStakeIn:                     types.NewCoinFromInt64(1000 * types.Decimals),
-				VoterCoinReturnIntervalSec:     int64(7 * 24 * 3600),
-				VoterCoinReturnTimes:           int64(7),
-				DelegatorCoinReturnIntervalSec: int64(7 * 24 * 3600),
-				DelegatorCoinReturnTimes:       int64(7),
+				MinStakeIn:                 types.NewCoinFromInt64(1000 * types.Decimals),
+				VoterCoinReturnIntervalSec: int64(7 * 24 * 3600),
+				VoterCoinReturnTimes:       int64(7),
 			},
 			param.ProposalParam{
 				ContentCensorshipDecideSec:  int64(24 * 7 * 3600),
@@ -126,9 +124,6 @@ func TestGetGenesisJson(t *testing.T) {
 				MaxVotedValidators:             int64(3),
 				SlashLimitation:                int64(5),
 			},
-			param.CoinDayParam{
-				SecondsToRecoverCoinDay: int64(7 * 24 * 3600),
-			},
 			param.BandwidthParam{
 				SecondsToRecoverBandwidth:   int64(7 * 24 * 3600),
 				CapacityUsagePerTransaction: types.NewCoinFromInt64(1 * types.Decimals),
@@ -146,16 +141,11 @@ func TestGetGenesisJson(t *testing.T) {
 				AppPunishmentFactor:         types.NewDecFromRat(14, 5),
 			},
 			param.AccountParam{
-				MinimumBalance:               types.NewCoinFromInt64(0),
-				RegisterFee:                  types.NewCoinFromInt64(1 * types.Decimals),
-				FirstDepositFullCoinDayLimit: types.NewCoinFromInt64(1 * types.Decimals),
-				MaxNumFrozenMoney:            10,
+				MinimumBalance:    types.NewCoinFromInt64(0),
+				RegisterFee:       types.NewCoinFromInt64(1 * types.Decimals),
+				MaxNumFrozenMoney: 10,
 			},
-			param.PostParam{
-				ReportOrUpvoteIntervalSec: 24 * 3600,
-				PostIntervalSec:           600,
-				MaxReportReputation:       types.NewCoinFromInt64(100 * types.Decimals),
-			},
+			param.PostParam{},
 			param.ReputationParam{
 				BestContentIndexN: 200,
 				UserMaxN:          50,

@@ -244,7 +244,6 @@ func MakeEventManagerCodec() *wire.Codec {
 	cdc.RegisterConcrete(param.ProposalParam{}, "param/proposal", nil)
 	cdc.RegisterConcrete(param.DeveloperParam{}, "param/developer", nil)
 	cdc.RegisterConcrete(param.ValidatorParam{}, "param/validator", nil)
-	cdc.RegisterConcrete(param.CoinDayParam{}, "param/coinDay", nil)
 	cdc.RegisterConcrete(param.BandwidthParam{}, "param/bandwidth", nil)
 	cdc.RegisterConcrete(param.AccountParam{}, "param/account", nil)
 	cdc.RegisterConcrete(param.PostParam{}, "param/post", nil)
@@ -279,7 +278,6 @@ func (lb *LinoBlockchain) initChainer(ctx sdk.Context, req abci.RequestInitChain
 			genesisState.GenesisParam.ValidatorParam,
 			genesisState.GenesisParam.VoteParam,
 			genesisState.GenesisParam.ProposalParam,
-			genesisState.GenesisParam.CoinDayParam,
 			genesisState.GenesisParam.BandwidthParam,
 			genesisState.GenesisParam.AccountParam,
 			genesisState.GenesisParam.ReputationParam,
