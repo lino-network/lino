@@ -103,25 +103,18 @@ func (suite *accountStoreTestSuite) TestBank() {
 	key1 := keys[0]
 	addr1 := sdk.AccAddress(key1.Address())
 	bank1 := &AccountBank{
-		Saving:          linotypes.NewCoinFromInt64(1234),
-		FrozenMoneyList: nil,
-		PubKey:          key1,
-		Sequence:        123,
-		Username:        user1,
+		Saving:   linotypes.NewCoinFromInt64(1234),
+		Pending:  linotypes.NewCoinFromInt64(0),
+		PubKey:   key1,
+		Sequence: 123,
+		Username: user1,
 	}
 
 	key2 := keys[1]
 	addr2 := sdk.AccAddress(key2.Address())
 	bank2 := &AccountBank{
 		Saving: linotypes.NewCoinFromInt64(2345),
-		FrozenMoneyList: []FrozenMoney{
-			{
-				Amount:   linotypes.NewCoinFromInt64(99),
-				StartAt:  123,
-				Times:    1,
-				Interval: 77,
-			},
-		},
+		Pending: linotypes.NewCoinFromInt64(789),
 		PubKey:   key2,
 		Sequence: 456,
 		Username: user2,
