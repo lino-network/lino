@@ -114,6 +114,6 @@ func encryptSave(filepath string, privKey []byte) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("encerypted key have been wrote to %s.\n", filepath)
+	fmt.Printf("encrypted key have been wrote to %s.\n", filepath)
 	return nil
 }
