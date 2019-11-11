@@ -484,7 +484,7 @@ func (lb *LinoBlockchain) endBlocker(ctx sdk.Context, req abci.RequestEndBlock) 
 func (lb *LinoBlockchain) hourlyBCEvent(ctx sdk.Context) (errs []types.BCEventErr) {
 	if err := lb.accountManager.Mint(ctx); err != nil {
 		// when mint error happens, panic to ensure that total supply is always correct.
-		panic(fmt.Errorf("Mint Error: %s", err))
+		panic(fmt.Errorf("mint error: %s", err))
 	}
 	if err := lb.valManager.DistributeInflationToValidator(ctx); err != nil {
 		errs = append(errs, types.NewBCEventErr(ctx, err, "validator/inflation"))
