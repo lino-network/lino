@@ -32,14 +32,10 @@ func (gp GlobalAllocationParam) IsValid() bool {
 // MinStakeIn - minimum stake for stake in msg
 // VoterCoinReturnIntervalSec - when withdraw or revoke, the deposit return to voter by return event
 // VoterCoinReturnTimes - when withdraw or revoke, the deposit return to voter by return event
-// DelegatorCoinReturnIntervalSec - when withdraw or revoke, the deposit return to delegator by return event
-// DelegatorCoinReturnTimes - when withdraw or revoke, the deposit return to delegator by return event
 type VoteParam struct {
-	MinStakeIn                     types.Coin `json:"min_stake_in"`
-	VoterCoinReturnIntervalSec     int64      `json:"voter_coin_return_interval_second"`
-	VoterCoinReturnTimes           int64      `json:"voter_coin_return_times"`
-	DelegatorCoinReturnIntervalSec int64      `json:"delegator_coin_return_interval_second"`
-	DelegatorCoinReturnTimes       int64      `json:"delegator_coin_return_times"`
+	MinStakeIn                 types.Coin `json:"min_stake_in"`
+	VoterCoinReturnIntervalSec int64      `json:"voter_coin_return_interval_second"`
+	VoterCoinReturnTimes       int64      `json:"voter_coin_return_times"`
 }
 
 // ProposalParam - proposal parameters
@@ -114,12 +110,6 @@ type ValidatorParam struct {
 	SlashLimitation                int64      `json:"slash_limitation"`
 }
 
-// CoinDayParam - coin day parameters
-// SecondsToRecoverCoinDay - seconds for each incoming balance coin day fully charged
-type CoinDayParam struct {
-	SecondsToRecoverCoinDay int64 `json:"seconds_to_recover_coin_day"`
-}
-
 // BandwidthParam - bandwidth parameters
 // SecondsToRecoverBandwidth - seconds for user tps capacity fully charged
 // CapacityUsagePerTransaction - capacity usage per transaction, dynamic changed based on traffic
@@ -155,22 +145,15 @@ type BandwidthParam struct {
 // AccountParam - account parameters
 // MinimumBalance - minimum balance each account need to maintain
 // RegisterFee - register fee need to pay to developer inflation pool for each account registration
-// FirstDepositFullCoinDayLimit - when register account, some of coin day of register fee to newly open account will be fully charged
 // MaxNumFrozenMoney - the upper limit for each person's ongoing frozen money
 type AccountParam struct {
-	MinimumBalance               types.Coin `json:"minimum_balance"`
-	RegisterFee                  types.Coin `json:"register_fee"`
-	FirstDepositFullCoinDayLimit types.Coin `json:"first_deposit_full_coin_day_limit"`
-	MaxNumFrozenMoney            int64      `json:"max_num_frozen_money"`
+	MinimumBalance    types.Coin `json:"minimum_balance"`
+	RegisterFee       types.Coin `json:"register_fee"`
+	MaxNumFrozenMoney int64      `json:"max_num_frozen_money"`
 }
 
-// PostParam - post parameters
-// ReportOrUpvoteIntervalSec - report interval second
-// PostIntervalSec - post interval second
+// PostParam - empty, reserved.
 type PostParam struct {
-	ReportOrUpvoteIntervalSec int64      `json:"report_or_upvote_interval_second"`
-	PostIntervalSec           int64      `json:"post_interval_sec"`
-	MaxReportReputation       types.Coin `json:"max_report_reputation"`
 }
 
 // ReputationParam: parameters of reputation
