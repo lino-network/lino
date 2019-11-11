@@ -17,7 +17,7 @@ type ReturnCoinEvent struct {
 
 // Execute - execute coin return events
 func (event ReturnCoinEvent) Execute(ctx sdk.Context, am AccountManager) sdk.Error {
-	err := am.AddPending(ctx, username, event.Amount.Neg())
+	err := am.AddPending(ctx, event.Username, event.Amount.Neg())
 	if err != nil {
 		return err
 	}

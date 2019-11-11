@@ -48,7 +48,9 @@
         "saving": {
           "amount": "0"
         },
-        "frozen_money_list": null,
+        "pending": {
+          "amount": "0"
+        },
         "public_key": {
           "type": "tendermint/PubKeySecp256k1",
           "value": "AoFqbXKmblwKVggqb8Cqo30gRKs9EfqwhOhuyOKlGCuD"
@@ -67,7 +69,9 @@
         "saving": {
           "amount": "100000"
         },
-        "frozen_money_list": null,
+        "pending": {
+          "amount": "0"
+        },
         "public_key": null,
         "sequence": "0",
         "username": ""
@@ -83,7 +87,9 @@
         "saving": {
           "amount": "99999999"
         },
-        "frozen_money_list": null,
+        "pending": {
+          "amount": "0"
+        },
         "public_key": {
           "type": "tendermint/PubKeySecp256k1",
           "value": "A1SxTVyDiXljmHeimniCQiNZQ3dcDsgppP0gDCMgJtdp"

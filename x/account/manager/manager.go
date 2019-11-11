@@ -244,7 +244,8 @@ func (am AccountManager) addCoinToAddress(ctx sdk.Context, addr sdk.AccAddress, 
 	if err != nil {
 		// if address is not created, created a new one
 		bank = &model.AccountBank{
-			Saving: linotypes.NewCoinFromInt64(0),
+			Saving:  linotypes.NewCoinFromInt64(0),
+			Pending: linotypes.NewCoinFromInt64(0),
 		}
 	}
 	bank.Saving = bank.Saving.Plus(coin)
@@ -490,7 +491,8 @@ func (accManager AccountManager) RecoverAccount(
 			return err
 		}
 		newBank = &model.AccountBank{
-			Saving: linotypes.NewCoinFromInt64(0),
+			Saving:  linotypes.NewCoinFromInt64(0),
+			Pending: linotypes.NewCoinFromInt64(0),
 		}
 	}
 	if newBank.Username != "" {
@@ -515,7 +517,6 @@ func (accManager AccountManager) RecoverAccount(
 	accInfo.SigningKey = newSigningKey
 	accInfo.TransactionKey = newTransactionPubKey
 
-	accParams := accManager.paramHolder.GetAccountParam(ctx)
 	newBank.Pending = newBank.Pending.Plus(oldBank.Pending)
 	oldBank.Pending = linotypes.NewCoinFromInt64(0)
 
