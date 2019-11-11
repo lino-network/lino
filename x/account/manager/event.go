@@ -17,6 +17,10 @@ type ReturnCoinEvent struct {
 
 // Execute - execute coin return events
 func (event ReturnCoinEvent) Execute(ctx sdk.Context, am AccountManager) sdk.Error {
+	err := am.AddPending(ctx, username, event.Amount.Neg())
+	if err != nil {
+		return err
+	}
 	return am.MoveFromPool(
 		ctx, event.FromPool, linotypes.NewAccOrAddrFromAcc(event.Username), event.Amount)
 }

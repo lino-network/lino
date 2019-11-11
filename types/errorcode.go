@@ -104,7 +104,6 @@ const (
 	CodeFailedToUnmarshalRewardHistory       sdk.CodeType = 359
 	CodeGetLastPostAt                        sdk.CodeType = 360
 	CodeUpdateLastPostAt                     sdk.CodeType = 361
-	CodeFrozenMoneyListTooLong               sdk.CodeType = 362
 	CodeAccountQueryFailed                   sdk.CodeType = 363
 	CodeGetSigningKeyFailed                  sdk.CodeType = 364
 	CodeGetAddressFailed                     sdk.CodeType = 365

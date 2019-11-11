@@ -19,11 +19,11 @@ type AccountInfo struct {
 
 // AccountBank - user balance
 type AccountBank struct {
-	Saving          types.Coin       `json:"saving"`
-	FrozenMoneyList []FrozenMoney    `json:"frozen_money_list"`
-	PubKey          crypto.PubKey    `json:"public_key"`
-	Sequence        uint64           `json:"sequence"`
-	Username        types.AccountKey `json:"username"`
+	Saving   types.Coin       `json:"saving"`
+	Pending  types.Coin       `json:"pending"`
+	PubKey   crypto.PubKey    `json:"public_key"`
+	Sequence uint64           `json:"sequence"`
+	Username types.AccountKey `json:"username"`
 }
 
 // Pool - the pool for modules
@@ -38,14 +38,6 @@ type Supply struct {
 	Total             types.Coin `json:"total"`
 	ChainStartTime    int64      `json:"chain_start_time"`
 	LastInflationTime int64      `json:"last_inflation_time"`
-}
-
-// FrozenMoney - frozen money
-type FrozenMoney struct {
-	Amount   types.Coin `json:"amount"`
-	StartAt  int64      `json:"start_at"`
-	Times    int64      `json:"times"`
-	Interval int64      `json:"interval"`
 }
 
 // AccountMeta - stores optional fields.

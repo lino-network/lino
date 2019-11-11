@@ -113,16 +113,6 @@ func ErrUpdateLastPostAt(err error) sdk.Error {
 	return types.NewError(types.CodeUpdateLastPostAt, fmt.Sprintf("failed to update last post at: %s", err.Error()))
 }
 
-// ErrGetFrozenMoneyList - error when get frozen money list failed
-func ErrGetFrozenMoneyList(err error) sdk.Error {
-	return types.NewError(types.CodeGetFrozenMoneyList, fmt.Sprintf("failed to get frozen money list: %s", err.Error()))
-}
-
-// ErrFrozenMoneyListTooLong - error when the length of frozen money list exceeds the upper limit
-func ErrFrozenMoneyListTooLong() sdk.Error {
-	return types.NewError(types.CodeFrozenMoneyListTooLong, fmt.Sprintf("frozen money list too long"))
-}
-
 // ErrIncreaseSequenceByOne - error when increase sequence number failed
 func ErrIncreaseSequenceByOne(err error) sdk.Error {
 	return types.NewError(types.CodeIncreaseSequenceByOne, fmt.Sprintf("failed to increase sequence by one: %s", err.Error()))
