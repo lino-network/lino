@@ -291,9 +291,8 @@ func TestGenesisFromConfig(t *testing.T) {
 			AppPunishmentFactor:         types.NewDecFromRat(14, 5),
 		},
 		param.AccountParam{
-			MinimumBalance:    types.NewCoinFromInt64(1 * types.Decimals),
-			RegisterFee:       types.NewCoinFromInt64(0),
-			MaxNumFrozenMoney: 10,
+			MinimumBalance: types.NewCoinFromInt64(1 * types.Decimals),
+			RegisterFee:    types.NewCoinFromInt64(0),
 		},
 		param.PostParam{},
 		param.ReputationParam{

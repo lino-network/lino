@@ -113,8 +113,8 @@ func (suite *accountStoreTestSuite) TestBank() {
 	key2 := keys[1]
 	addr2 := sdk.AccAddress(key2.Address())
 	bank2 := &AccountBank{
-		Saving: linotypes.NewCoinFromInt64(2345),
-		Pending: linotypes.NewCoinFromInt64(789),
+		Saving:   linotypes.NewCoinFromInt64(2345),
+		Pending:  linotypes.NewCoinFromInt64(789),
 		PubKey:   key2,
 		Sequence: 456,
 		Username: user2,

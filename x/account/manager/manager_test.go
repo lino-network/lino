@@ -1455,15 +1455,15 @@ func (suite *AccountManagerTestSuite) TestRecoverAccount() {
 			expectErr:        nil,
 			oldAddr:          sdk.AccAddress(suite.userWithoutBalance.TransactionKey.Address()),
 			expectOldBank: &model.AccountBank{
-				PubKey: suite.userWithoutBalance.TransactionKey,
-				Saving: types.NewCoinFromInt64(0),
+				PubKey:  suite.userWithoutBalance.TransactionKey,
+				Saving:  types.NewCoinFromInt64(0),
 				Pending: linotypes.NewCoinFromInt64(0),
 			},
 			expectNewBank: &model.AccountBank{
 				Username: suite.userWithoutBalance.Username,
 				PubKey:   txPrivKeys[0].PubKey(),
 				Saving:   types.NewCoinFromInt64(0),
-				Pending: linotypes.NewCoinFromInt64(0),
+				Pending:  linotypes.NewCoinFromInt64(0),
 			},
 			expectInfo: &model.AccountInfo{
 				Username:       suite.userWithoutBalance.Username,

@@ -146,8 +146,8 @@ type BandwidthParam struct {
 // MinimumBalance - minimum balance each account need to maintain
 // RegisterFee - register fee need to pay to developer inflation pool for each account registration
 type AccountParam struct {
-	MinimumBalance    types.Coin `json:"minimum_balance"`
-	RegisterFee       types.Coin `json:"register_fee"`
+	MinimumBalance types.Coin `json:"minimum_balance"`
+	RegisterFee    types.Coin `json:"register_fee"`
 }
 
 // PostParam - empty, reserved.
