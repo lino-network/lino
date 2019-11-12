@@ -239,9 +239,8 @@ func LinoBlockchainGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (appSt
 				AppPunishmentFactor:         types.NewDecFromRat(14, 5),
 			},
 			param.AccountParam{
-				MinimumBalance:    types.NewCoinFromInt64(0),
-				RegisterFee:       types.NewCoinFromInt64(1 * types.Decimals),
-				MaxNumFrozenMoney: 10,
+				MinimumBalance: types.NewCoinFromInt64(0),
+				RegisterFee:    types.NewCoinFromInt64(1 * types.Decimals),
 			},
 			param.PostParam{},
 			param.ReputationParam{

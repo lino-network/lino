@@ -127,14 +127,19 @@ func TestReturnCoinEvent(t *testing.T) {
 	accParam := am.paramHolder.GetAccountParam(ctx)
 
 	createTestAccount(ctx, am, "user1")
+	err := am.AddPending(ctx, "user1", types.NewCoinFromInt64(1000))
+	if err != nil {
+		panic(err)
+	}
 
 	// Get the minimum time of this history slot
 	baseTime := time.Now().Unix()
 	testCases := []struct {
-		testName     string
-		event        ReturnCoinEvent
-		atWhen       int64
-		expectSaving types.Coin
+		testName        string
+		event           ReturnCoinEvent
+		atWhen          int64
+		expectSaving    types.Coin
+		expectedPending types.Coin
 	}{
 		{
 			testName: "normal return case",
@@ -144,8 +149,9 @@ func TestReturnCoinEvent(t *testing.T) {
 				ReturnType: types.DelegationReturnCoin,
 				FromPool:   types.AccountVestingPool,
 			},
-			atWhen:       baseTime,
-			expectSaving: types.NewCoinFromInt64(100).Plus(accParam.RegisterFee),
+			atWhen:          baseTime,
+			expectSaving:    types.NewCoinFromInt64(100).Plus(accParam.RegisterFee),
+			expectedPending: types.NewCoinFromInt64(900),
 		},
 		{
 			testName: "return zero coin",
@@ -155,8 +161,9 @@ func TestReturnCoinEvent(t *testing.T) {
 				ReturnType: types.VoteReturnCoin,
 				FromPool:   types.AccountVestingPool,
 			},
-			atWhen:       baseTime,
-			expectSaving: types.NewCoinFromInt64(100).Plus(accParam.RegisterFee),
+			atWhen:          baseTime,
+			expectSaving:    types.NewCoinFromInt64(100).Plus(accParam.RegisterFee),
+			expectedPending: types.NewCoinFromInt64(900),
 		},
 	}
 
@@ -171,6 +178,14 @@ func TestReturnCoinEvent(t *testing.T) {
 		}
 		if !saving.IsEqual(tc.expectSaving) {
 			t.Errorf("%s: diff saving, got %v, want %v", tc.testName, saving, tc.expectSaving)
+		}
+		bank, err := am.GetBank(ctx, tc.event.Username)
+		if err != nil {
+			t.Errorf("%s: failed to get bank, got err %v", tc.testName, err)
+		}
+		if !bank.Pending.IsEqual(tc.expectedPending) {
+			t.Errorf("%s: diff pending, got %v, want %v",
+				tc.testName, bank.Pending, tc.expectedPending)
 		}
 	}
 }

@@ -162,9 +162,8 @@ func TestAccountParam(t *testing.T) {
 	ph := NewParamHolder(TestKVStoreKey)
 	ctx := getContext()
 	parameter := AccountParam{
-		MinimumBalance:    types.NewCoinFromInt64(1 * types.Decimals),
-		RegisterFee:       types.NewCoinFromInt64(1 * types.Decimals),
-		MaxNumFrozenMoney: 10,
+		MinimumBalance: types.NewCoinFromInt64(1 * types.Decimals),
+		RegisterFee:    types.NewCoinFromInt64(1 * types.Decimals),
 	}
 	err := ph.setAccountParam(ctx, &parameter)
 	assert.Nil(t, err)
@@ -251,9 +250,8 @@ func TestInitParam(t *testing.T) {
 		AppPunishmentFactor:         types.NewDecFromRat(14, 5),
 	}
 	accountParam := AccountParam{
-		MinimumBalance:    types.NewCoinFromInt64(0),
-		RegisterFee:       types.NewCoinFromInt64(1 * types.Decimals),
-		MaxNumFrozenMoney: 10,
+		MinimumBalance: types.NewCoinFromInt64(0),
+		RegisterFee:    types.NewCoinFromInt64(1 * types.Decimals),
 	}
 	postParam := PostParam{}
 	repParam := ReputationParam{
@@ -345,9 +343,8 @@ func TestInitParamFromConfig(t *testing.T) {
 		AppPunishmentFactor:         types.NewDecFromRat(14, 5),
 	}
 	accountParam := AccountParam{
-		MinimumBalance:    types.NewCoinFromInt64(0),
-		RegisterFee:       types.NewCoinFromInt64(1 * types.Decimals),
-		MaxNumFrozenMoney: 10,
+		MinimumBalance: types.NewCoinFromInt64(0),
+		RegisterFee:    types.NewCoinFromInt64(1 * types.Decimals),
 	}
 	postParam := PostParam{}
 	repParam := ReputationParam{

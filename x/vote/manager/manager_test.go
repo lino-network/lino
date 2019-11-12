@@ -307,8 +307,7 @@ func (suite *VoteManagerTestSuite) TestMultipleStakeInWithConsumption() {
 	user2 := linotypes.AccountKey("user2")
 	suite.hooks.On("AfterAddingStake", mock.Anything, mock.Anything).Return(nil).Maybe()
 	suite.hooks.On("AfterSubtractingStake", mock.Anything, mock.Anything).Return(nil).Maybe()
-	suite.am.On("AddFrozenMoney", mock.Anything, mock.Anything,
-		mock.Anything, mock.Anything, int64(100), int64(1)).Return(nil)
+	suite.am.On("AddPending", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	// linotypes.VoteReturnCoin, linotypes.VoteStakeReturnPool
 	suite.am.On("MoveToPool", mock.Anything, linotypes.VoteStakeInPool,
 		mock.Anything, mock.Anything).Return(nil)
@@ -477,9 +476,8 @@ func (suite *VoteManagerTestSuite) TestStakeOut() {
 					linotypes.VoteStakeInPool, linotypes.VoteStakeReturnPool,
 					tc.amount).Return(nil).Once()
 
-				suite.am.On("AddFrozenMoney", mock.Anything,
-					tc.username, tc.amount, tc.atWhen.Unix(),
-					suite.returnIntervalSec, suite.returnTimes).Return(nil).Once()
+				suite.am.On("AddPending", mock.Anything,
+					tc.username, tc.amount).Return(nil).Once()
 				suite.global.On(
 					"RegisterEventAtTime", mock.Anything,
 					tc.atWhen.Unix()+suite.returnIntervalSec,

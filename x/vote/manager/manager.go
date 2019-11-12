@@ -151,9 +151,7 @@ func (vm VoteManager) StakeOut(ctx sdk.Context, username linotypes.AccountKey, a
 		param.VoterCoinReturnTimes = 1
 	}
 
-	if err := vm.am.AddFrozenMoney(
-		ctx, username, amount, ctx.BlockHeader().Time.Unix(),
-		param.VoterCoinReturnIntervalSec, param.VoterCoinReturnTimes); err != nil {
+	if err := vm.am.AddPending(ctx, username, amount); err != nil {
 		return err
 	}
 

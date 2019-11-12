@@ -18,20 +18,12 @@ type AccountIR struct {
 
 // AccountBankIR - user balance
 type AccountBankIR struct {
-	Address         []byte           `json:"address"` // pk
-	Saving          types.Coin       `json:"saving"`
-	FrozenMoneyList []FrozenMoneyIR  `json:"frozen_money_list"`
-	PubKey          crypto.PubKey    `json:"public_key"`
-	Sequence        uint64           `json:"sequence"`
-	Username        types.AccountKey `json:"username"`
-}
-
-// FrozenMoneyIR - frozen money
-type FrozenMoneyIR struct {
-	Amount   types.Coin `json:"amount"`
-	StartAt  int64      `json:"start_at"`
-	Times    int64      `json:"times"`
-	Interval int64      `json:"interval"`
+	Address  []byte           `json:"address"` // pk
+	Saving   types.Coin       `json:"saving"`
+	Pending  types.Coin       `json:"pending"`
+	PubKey   crypto.PubKey    `json:"public_key"`
+	Sequence uint64           `json:"sequence"`
+	Username types.AccountKey `json:"username"`
 }
 
 // AccountMetaIR - stores optional fields.

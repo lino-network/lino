@@ -21,8 +21,8 @@ const (
 	// HoursPerYear - as defined by a julian year of 365.25 days
 	nHourOfOneYear = 8766
 
-	exportVersion = 2
-	importVersion = 2
+	exportVersion = 3
+	importVersion = 3
 )
 
 // AccountManager - account manager
@@ -244,7 +244,8 @@ func (am AccountManager) addCoinToAddress(ctx sdk.Context, addr sdk.AccAddress, 
 	if err != nil {
 		// if address is not created, created a new one
 		bank = &model.AccountBank{
-			Saving: linotypes.NewCoinFromInt64(0),
+			Saving:  linotypes.NewCoinFromInt64(0),
+			Pending: linotypes.NewCoinFromInt64(0),
 		}
 	}
 	bank.Saving = bank.Saving.Plus(coin)
@@ -417,16 +418,6 @@ func (accManager AccountManager) GetAddress(ctx sdk.Context, username linotypes.
 	return info.Address, nil
 }
 
-// GetFrozenMoneyList - get user frozen money list
-func (accManager AccountManager) GetFrozenMoneyList(
-	ctx sdk.Context, addr sdk.Address) ([]model.FrozenMoney, sdk.Error) {
-	bank, err := accManager.storage.GetBank(ctx, addr)
-	if err != nil {
-		return nil, types.ErrGetFrozenMoneyList(err)
-	}
-	return bank.FrozenMoneyList, nil
-}
-
 // IncreaseSequenceByOne - increase user sequence number by one
 func (accManager AccountManager) IncreaseSequenceByOne(ctx sdk.Context, address sdk.Address) sdk.Error {
 	bank, err := accManager.storage.GetBank(ctx, address)
@@ -500,7 +491,8 @@ func (accManager AccountManager) RecoverAccount(
 			return err
 		}
 		newBank = &model.AccountBank{
-			Saving: linotypes.NewCoinFromInt64(0),
+			Saving:  linotypes.NewCoinFromInt64(0),
+			Pending: linotypes.NewCoinFromInt64(0),
 		}
 	}
 	if newBank.Username != "" {
@@ -525,13 +517,8 @@ func (accManager AccountManager) RecoverAccount(
 	accInfo.SigningKey = newSigningKey
 	accInfo.TransactionKey = newTransactionPubKey
 
-	accParams := accManager.paramHolder.GetAccountParam(ctx)
-	newBank.FrozenMoneyList = append(newBank.FrozenMoneyList, oldBank.FrozenMoneyList...)
-	if int64(len(newBank.FrozenMoneyList)) >= accParams.MaxNumFrozenMoney {
-		return types.ErrFrozenMoneyListTooLong()
-	}
-
-	oldBank.FrozenMoneyList = nil
+	newBank.Pending = newBank.Pending.Plus(oldBank.Pending)
+	oldBank.Pending = linotypes.NewCoinFromInt64(0)
 
 	accManager.storage.SetInfo(ctx, accInfo)
 	accManager.storage.SetBank(ctx, newAddr, newBank)
@@ -539,47 +526,19 @@ func (accManager AccountManager) RecoverAccount(
 	return nil
 }
 
-// AddFrozenMoney - add frozen money to user's frozen money list
-func (accManager AccountManager) AddFrozenMoney(
-	ctx sdk.Context, username linotypes.AccountKey,
-	amount linotypes.Coin, start, interval, times int64) sdk.Error {
+// AddPending - record pending amount of a user.
+func (accManager AccountManager) AddPending(ctx sdk.Context, username linotypes.AccountKey, amount linotypes.Coin) sdk.Error {
 	info, err := accManager.storage.GetInfo(ctx, username)
 	if err != nil {
 		return err
 	}
-	accountBank, err := accManager.storage.GetBank(ctx, info.Address)
+	bank, err := accManager.storage.GetBank(ctx, info.Address)
 	if err != nil {
 		return err
 	}
-	accManager.cleanExpiredFrozenMoney(ctx, accountBank)
-	frozenMoney := model.FrozenMoney{
-		Amount:   amount,
-		StartAt:  start,
-		Interval: interval,
-		Times:    times,
-	}
-
-	accParams := accManager.paramHolder.GetAccountParam(ctx)
-	if int64(len(accountBank.FrozenMoneyList)) >= accParams.MaxNumFrozenMoney {
-		return types.ErrFrozenMoneyListTooLong()
-	}
-
-	accountBank.FrozenMoneyList = append(accountBank.FrozenMoneyList, frozenMoney)
-	accManager.storage.SetBank(ctx, info.Address, accountBank)
+	bank.Pending = bank.Pending.Plus(amount)
+	accManager.storage.SetBank(ctx, info.Address, bank)
 	return nil
-}
-
-func (accManager AccountManager) cleanExpiredFrozenMoney(ctx sdk.Context, bank *model.AccountBank) {
-	idx := 0
-	for idx < len(bank.FrozenMoneyList) {
-		frozenMoney := bank.FrozenMoneyList[idx]
-		if ctx.BlockHeader().Time.Unix() > frozenMoney.StartAt+frozenMoney.Interval*frozenMoney.Times {
-			bank.FrozenMoneyList = append(bank.FrozenMoneyList[:idx], bank.FrozenMoneyList[idx+1:]...)
-			continue
-		}
-
-		idx++
-	}
 }
 
 // getter
@@ -625,17 +584,13 @@ func (am AccountManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepat
 	substores[string(model.AccountBankSubstore)].Iterate(func(key []byte, val interface{}) bool {
 		bank := val.(*model.AccountBank)
 		addr := key
-		frozens := make([]model.FrozenMoneyIR, len(bank.FrozenMoneyList))
-		for i, v := range bank.FrozenMoneyList {
-			frozens[i] = model.FrozenMoneyIR(v)
-		}
 		state.Banks = append(state.Banks, model.AccountBankIR{
-			Address:         addr,
-			Saving:          bank.Saving,
-			FrozenMoneyList: frozens,
-			PubKey:          bank.PubKey,
-			Sequence:        bank.Sequence,
-			Username:        bank.Username,
+			Address:  addr,
+			Saving:   bank.Saving,
+			Pending:  bank.Pending,
+			PubKey:   bank.PubKey,
+			Sequence: bank.Sequence,
+			Username: bank.Username,
 		})
 		return false
 	})
@@ -694,16 +649,12 @@ func (am AccountManager) ImportFromFile(ctx sdk.Context, cdc *codec.Codec, filep
 
 	// import banks
 	for _, v := range table.Banks {
-		frozens := make([]model.FrozenMoney, 0)
-		for _, f := range v.FrozenMoneyList {
-			frozens = append(frozens, model.FrozenMoney(f))
-		}
 		bank := model.AccountBank{
-			Saving:          v.Saving,
-			FrozenMoneyList: frozens,
-			PubKey:          v.PubKey,
-			Sequence:        v.Sequence,
-			Username:        v.Username,
+			Saving:   v.Saving,
+			Pending:  v.Pending,
+			PubKey:   v.PubKey,
+			Sequence: v.Sequence,
+			Username: v.Username,
 		}
 		if banks[string(v.Address)] > 1 {
 			panic(fmt.Errorf("duplicated address: %+v", v))

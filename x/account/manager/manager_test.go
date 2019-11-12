@@ -102,9 +102,8 @@ func (suite *AccountManagerTestSuite) SetupTest() {
 	suite.am.addCoinToAddress(suite.Ctx, sdk.AccAddress(suite.unreg.TransactionKey.Address()), suite.unregSaving)
 
 	suite.ph.On("GetAccountParam", mock.Anything).Return(&parammodel.AccountParam{
-		RegisterFee:       suite.registerFee,
-		MinimumBalance:    types.NewCoinFromInt64(0),
-		MaxNumFrozenMoney: 10,
+		RegisterFee:    suite.registerFee,
+		MinimumBalance: types.NewCoinFromInt64(0),
 	}, nil).Maybe()
 }
 
@@ -589,6 +588,7 @@ func (suite *AccountManagerTestSuite) TestAddCoinToAddress() {
 			amount:   c100,
 			expectBank: &model.AccountBank{
 				Saving:   suite.userWithBalanceSaving.Plus(c100),
+				Pending:  linotypes.NewCoinFromInt64(0),
 				PubKey:   userWithBalance.TransactionKey,
 				Username: userWithBalance.Username,
 			},
@@ -598,7 +598,8 @@ func (suite *AccountManagerTestSuite) TestAddCoinToAddress() {
 			address:  sdk.AccAddress(unreg.TransactionKey.Address()),
 			amount:   c100,
 			expectBank: &model.AccountBank{
-				Saving: suite.unregSaving.Plus(c100),
+				Saving:  suite.unregSaving.Plus(c100),
+				Pending: linotypes.NewCoinFromInt64(0),
 			},
 		},
 		{
@@ -606,7 +607,8 @@ func (suite *AccountManagerTestSuite) TestAddCoinToAddress() {
 			address:  emptyAddress,
 			amount:   c100,
 			expectBank: &model.AccountBank{
-				Saving: c100,
+				Saving:  c100,
+				Pending: linotypes.NewCoinFromInt64(0),
 			},
 		},
 	}
@@ -635,6 +637,7 @@ func (suite *AccountManagerTestSuite) TestAddCoinToUsername() {
 			expectErr: nil,
 			expectBank: &model.AccountBank{
 				Saving:   suite.userWithBalanceSaving.Plus(c100),
+				Pending:  linotypes.NewCoinFromInt64(0),
 				PubKey:   userWithBalance.TransactionKey,
 				Username: userWithBalance.Username,
 			},
@@ -680,6 +683,7 @@ func (suite *AccountManagerTestSuite) TestMinusCoinFromAddress() {
 			amount:    coin100,
 			expectBank: &model.AccountBank{
 				Saving:   suite.userWithBalanceSaving.Minus(coin100),
+				Pending:  linotypes.NewCoinFromInt64(0),
 				PubKey:   userWithBalance.TransactionKey,
 				Username: userWithBalance.Username,
 			},
@@ -692,6 +696,7 @@ func (suite *AccountManagerTestSuite) TestMinusCoinFromAddress() {
 			expectBank: &model.AccountBank{
 				PubKey:   userWithoutBalance.TransactionKey,
 				Saving:   types.NewCoinFromInt64(0),
+				Pending:  linotypes.NewCoinFromInt64(0),
 				Username: userWithoutBalance.Username,
 			},
 		},
@@ -702,6 +707,7 @@ func (suite *AccountManagerTestSuite) TestMinusCoinFromAddress() {
 			amount:    suite.userWithBalanceSaving,
 			expectBank: &model.AccountBank{
 				Saving:   suite.userWithBalanceSaving.Minus(coin100),
+				Pending:  linotypes.NewCoinFromInt64(0),
 				PubKey:   userWithBalance.TransactionKey,
 				Username: userWithBalance.Username,
 			},
@@ -712,7 +718,8 @@ func (suite *AccountManagerTestSuite) TestMinusCoinFromAddress() {
 			expectErr: nil,
 			amount:    coin100,
 			expectBank: &model.AccountBank{
-				Saving: suite.unregSaving.Minus(coin100),
+				Saving:  suite.unregSaving.Minus(coin100),
+				Pending: linotypes.NewCoinFromInt64(0),
 			},
 		},
 		{
@@ -754,6 +761,7 @@ func (suite *AccountManagerTestSuite) TestMinusCoinFromUsername() {
 			amount:    coin100,
 			expectBank: &model.AccountBank{
 				Saving:   suite.userWithBalanceSaving.Minus(coin100),
+				Pending:  linotypes.NewCoinFromInt64(0),
 				PubKey:   userWithBalance.TransactionKey,
 				Username: userWithBalance.Username,
 			},
@@ -766,6 +774,7 @@ func (suite *AccountManagerTestSuite) TestMinusCoinFromUsername() {
 			expectBank: &model.AccountBank{
 				PubKey:   userWithoutBalance.TransactionKey,
 				Saving:   types.NewCoinFromInt64(0),
+				Pending:  linotypes.NewCoinFromInt64(0),
 				Username: userWithoutBalance.Username,
 			},
 		},
@@ -776,6 +785,7 @@ func (suite *AccountManagerTestSuite) TestMinusCoinFromUsername() {
 			amount:    suite.userWithBalanceSaving,
 			expectBank: &model.AccountBank{
 				Saving:   suite.userWithBalanceSaving.Minus(coin100),
+				Pending:  linotypes.NewCoinFromInt64(0),
 				PubKey:   userWithBalance.TransactionKey,
 				Username: userWithBalance.Username,
 			},
@@ -826,6 +836,7 @@ func (suite *AccountManagerTestSuite) TestCreateAccount() {
 			expectInfo: &userWithBalance,
 			expectBank: &model.AccountBank{
 				Saving:   suite.userWithBalanceSaving,
+				Pending:  linotypes.NewCoinFromInt64(0),
 				PubKey:   userWithBalance.TransactionKey,
 				Username: userWithBalance.Username,
 			},
@@ -839,6 +850,7 @@ func (suite *AccountManagerTestSuite) TestCreateAccount() {
 			expectInfo: nil,
 			expectBank: &model.AccountBank{
 				Saving:   suite.userWithBalanceSaving,
+				Pending:  linotypes.NewCoinFromInt64(0),
 				PubKey:   userWithBalance.TransactionKey,
 				Username: userWithBalance.Username,
 			},
@@ -852,6 +864,7 @@ func (suite *AccountManagerTestSuite) TestCreateAccount() {
 			expectInfo: &unreg,
 			expectBank: &model.AccountBank{
 				Saving:   suite.unregSaving,
+				Pending:  linotypes.NewCoinFromInt64(0),
 				PubKey:   unreg.TransactionKey,
 				Username: unreg.Username,
 			},
@@ -870,6 +883,7 @@ func (suite *AccountManagerTestSuite) TestCreateAccount() {
 			},
 			expectBank: &model.AccountBank{
 				Saving:   types.NewCoinFromInt64(0),
+				Pending:  linotypes.NewCoinFromInt64(0),
 				PubKey:   txKeyWithEmptyAddress,
 				Username: "test1",
 			},
@@ -887,6 +901,7 @@ func (suite *AccountManagerTestSuite) TestCreateAccount() {
 			},
 			expectBank: &model.AccountBank{
 				Saving:   types.NewCoinFromInt64(0),
+				Pending:  linotypes.NewCoinFromInt64(0),
 				PubKey:   txKey,
 				Username: "test2",
 			},
@@ -969,6 +984,7 @@ func (suite *AccountManagerTestSuite) TestRegisterAccount() {
 			accInfo:     &suite.userWithoutBalance,
 			accBank: &model.AccountBank{
 				Saving:   types.NewCoinFromInt64(0),
+				Pending:  linotypes.NewCoinFromInt64(0),
 				Username: suite.userWithoutBalance.Username,
 				PubKey:   suite.userWithoutBalance.TransactionKey,
 			},
@@ -1000,6 +1016,7 @@ func (suite *AccountManagerTestSuite) TestRegisterAccount() {
 			},
 			accBank: &model.AccountBank{
 				Saving:   types.NewCoinFromInt64(0),
+				Pending:  linotypes.NewCoinFromInt64(0),
 				Username: "test1",
 				PubKey:   txPrivKeys[0].PubKey(),
 			},
@@ -1033,6 +1050,7 @@ func (suite *AccountManagerTestSuite) TestRegisterAccount() {
 			},
 			accBank: &model.AccountBank{
 				Saving:   types.NewCoinFromInt64(0),
+				Pending:  linotypes.NewCoinFromInt64(0),
 				Username: "test3",
 				PubKey:   txPrivKeys[1].PubKey(),
 			},
@@ -1172,8 +1190,9 @@ func (suite *AccountManagerTestSuite) TestCheckSigningPubKeyOwnerByAddress() {
 			isPaid:    true,
 			expectErr: nil,
 			expectAccBank: &model.AccountBank{
-				Saving: types.NewCoinFromInt64(0),
-				PubKey: txPrivKeys[0].PubKey(),
+				Saving:  types.NewCoinFromInt64(0),
+				Pending: linotypes.NewCoinFromInt64(0),
+				PubKey:  txPrivKeys[0].PubKey(),
 			},
 		},
 		{
@@ -1184,7 +1203,8 @@ func (suite *AccountManagerTestSuite) TestCheckSigningPubKeyOwnerByAddress() {
 			expectErr: sdk.ErrInvalidPubKey(
 				fmt.Sprintf("PubKey does not match Signer address %s", sdk.AccAddress(suite.unreg.TransactionKey.Address()))),
 			expectAccBank: &model.AccountBank{
-				Saving: suite.unregSaving,
+				Saving:  suite.unregSaving,
+				Pending: linotypes.NewCoinFromInt64(0),
 			},
 		},
 		{
@@ -1194,8 +1214,9 @@ func (suite *AccountManagerTestSuite) TestCheckSigningPubKeyOwnerByAddress() {
 			isPaid:    false,
 			expectErr: nil,
 			expectAccBank: &model.AccountBank{
-				PubKey: suite.unreg.TransactionKey,
-				Saving: suite.unregSaving,
+				PubKey:  suite.unreg.TransactionKey,
+				Saving:  suite.unregSaving,
+				Pending: linotypes.NewCoinFromInt64(0),
 			},
 		},
 		{
@@ -1207,6 +1228,7 @@ func (suite *AccountManagerTestSuite) TestCheckSigningPubKeyOwnerByAddress() {
 			expectAccBank: &model.AccountBank{
 				PubKey:   suite.userWithoutBalance.TransactionKey,
 				Saving:   types.NewCoinFromInt64(0),
+				Pending:  linotypes.NewCoinFromInt64(0),
 				Username: suite.userWithoutBalance.Username,
 			},
 		},
@@ -1311,86 +1333,72 @@ func TestIncreaseSequenceByOne(t *testing.T) {
 	}
 }
 
-func TestAddFrozenMoney(t *testing.T) {
-	ctx, am := setupTest(t, 1)
-	user1 := types.AccountKey("user1")
-
-	createTestAccount(ctx, am, string(user1))
-	addr, err := am.GetAddress(ctx, user1)
-	if err != nil {
-		t.Errorf("TestAddFrozenMoney: failed to get address, got err %v", err)
-	}
-
+func TestAddPending(t *testing.T) {
 	testCases := []struct {
-		testName                string
-		frozenAmount            types.Coin
-		startAt                 int64
-		interval                int64
-		times                   int64
-		expectNumOfFrozenAmount int
+		testName         string
+		addPendingAmount []types.Coin
+		expectedAmount   types.Coin
 	}{
 		{
-			testName:                "add the first 100 frozen money",
-			frozenAmount:            types.NewCoinFromInt64(100),
-			startAt:                 1000000,
-			interval:                10 * 3600,
-			times:                   5,
-			expectNumOfFrozenAmount: 1,
+			testName:         "add 100",
+			addPendingAmount: []types.Coin{types.NewCoinFromInt64(100)},
+			expectedAmount:   types.NewCoinFromInt64(100),
 		},
 		{
-			testName:                "add the second 100 frozen money, clear the first one",
-			frozenAmount:            types.NewCoinFromInt64(100),
-			startAt:                 1200000,
-			interval:                10 * 3600,
-			times:                   5,
-			expectNumOfFrozenAmount: 1,
+			testName: "add 100, -100",
+			addPendingAmount: []types.Coin{
+				types.NewCoinFromInt64(100),
+				types.NewCoinFromInt64(100).Neg()},
+			expectedAmount: types.NewCoinFromInt64(0),
 		},
 		{
-			testName:                "add the third 100 frozen money",
-			frozenAmount:            types.NewCoinFromInt64(100),
-			startAt:                 1300000,
-			interval:                10 * 3600,
-			times:                   5,
-			expectNumOfFrozenAmount: 2,
+			testName: "add 1,2,3,4,5,-1,-2,-5",
+			addPendingAmount: []types.Coin{
+				types.NewCoinFromInt64(1),
+				types.NewCoinFromInt64(2),
+				types.NewCoinFromInt64(3),
+				types.NewCoinFromInt64(4),
+				types.NewCoinFromInt64(5),
+				types.NewCoinFromInt64(-1),
+				types.NewCoinFromInt64(-2),
+				types.NewCoinFromInt64(-5),
+			},
+			expectedAmount: types.NewCoinFromInt64(7),
 		},
-		{
-			testName:                "add the fourth 100 frozen money, clear the second one",
-			frozenAmount:            types.NewCoinFromInt64(100),
-			startAt:                 1400000,
-			interval:                10 * 3600,
-			times:                   5,
-			expectNumOfFrozenAmount: 2,
-		},
-		{
-			testName:                "add the fifth 100 frozen money, clear the third and fourth ones",
-			frozenAmount:            types.NewCoinFromInt64(100),
-			startAt:                 1600000,
-			interval:                10 * 3600,
-			times:                   5,
-			expectNumOfFrozenAmount: 1,
-		}, // this one is used to re-produce the out-of-bound bug.
 	}
 
 	for _, tc := range testCases {
-		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 1, Time: time.Unix(tc.startAt, 0)})
-		err := am.AddFrozenMoney(ctx, user1, tc.frozenAmount, tc.startAt, tc.interval, tc.times)
+		ctx, am := setupTest(t, 1)
+		user1 := types.AccountKey("user1")
+
+		createTestAccount(ctx, am, string(user1))
+		addr, err := am.GetAddress(ctx, user1)
 		if err != nil {
-			t.Errorf("%s: failed to add frozen money, got err %v", tc.testName, err)
+			t.Errorf("TestAddPending: failed to get address, got err %v", err)
+		}
+
+		ctx = ctx.WithBlockHeader(abci.Header{ChainID: "Lino", Height: 1, Time: time.Unix(0, 0)})
+		for _, amount := range tc.addPendingAmount {
+			err := am.AddPending(ctx, user1, amount)
+			if err != nil {
+				t.Errorf("%s: failed to add frozen money, got err %v", tc.testName, err)
+			}
 		}
 
 		accountBank, err := am.storage.GetBank(ctx, addr)
 		if err != nil {
 			t.Errorf("%s: failed to get bank, got err %v", tc.testName, err)
 		}
-		if len(accountBank.FrozenMoneyList) != tc.expectNumOfFrozenAmount {
-			t.Errorf("%s: diff num of frozen money, got %v, want %v", tc.testName, len(accountBank.FrozenMoneyList), tc.expectNumOfFrozenAmount)
+		if !accountBank.Pending.IsEqual(tc.expectedAmount) {
+			t.Errorf("%s: expected: %s, got: %s",
+				tc.testName, tc.expectedAmount, accountBank.Pending)
 		}
 	}
 }
 
 func (suite *AccountManagerTestSuite) TestRecoverAccount() {
 	txPrivKeys := []crypto.PrivKey{secp256k1.GenPrivKey()}
-	err := suite.am.AddFrozenMoney(suite.Ctx, suite.userWithBalance.Username, types.NewCoinFromInt64(1), 0, 100, 10)
+	err := suite.am.AddPending(suite.Ctx, suite.userWithBalance.Username, types.NewCoinFromInt64(1))
 	suite.Nil(err)
 	testCases := []struct {
 		testName         string
@@ -1411,7 +1419,8 @@ func (suite *AccountManagerTestSuite) TestRecoverAccount() {
 			expectErr:        acctypes.ErrAccountNotFound(suite.unreg.Username),
 			oldAddr:          sdk.AccAddress(suite.unreg.TransactionKey.Address()),
 			expectOldBank: &model.AccountBank{
-				Saving: suite.unregSaving,
+				Saving:  suite.unregSaving,
+				Pending: linotypes.NewCoinFromInt64(0),
 			},
 			expectNewBank: nil,
 			expectInfo:    nil,
@@ -1428,19 +1437,13 @@ func (suite *AccountManagerTestSuite) TestRecoverAccount() {
 				Username: suite.userWithoutBalance.Username,
 				PubKey:   suite.userWithoutBalance.TransactionKey,
 				Saving:   types.NewCoinFromInt64(0),
+				Pending:  linotypes.NewCoinFromInt64(0),
 			},
 			expectNewBank: &model.AccountBank{
 				Username: suite.userWithBalance.Username,
 				PubKey:   suite.userWithBalance.TransactionKey,
 				Saving:   suite.userWithBalanceSaving,
-				FrozenMoneyList: []model.FrozenMoney{
-					{
-						Amount:   types.NewCoinFromInt64(1),
-						StartAt:  0,
-						Interval: 100,
-						Times:    10,
-					},
-				},
+				Pending:  types.NewCoinFromInt64(1),
 			},
 			expectInfo: &suite.userWithoutBalance,
 		},
@@ -1452,13 +1455,15 @@ func (suite *AccountManagerTestSuite) TestRecoverAccount() {
 			expectErr:        nil,
 			oldAddr:          sdk.AccAddress(suite.userWithoutBalance.TransactionKey.Address()),
 			expectOldBank: &model.AccountBank{
-				PubKey: suite.userWithoutBalance.TransactionKey,
-				Saving: types.NewCoinFromInt64(0),
+				PubKey:  suite.userWithoutBalance.TransactionKey,
+				Saving:  types.NewCoinFromInt64(0),
+				Pending: linotypes.NewCoinFromInt64(0),
 			},
 			expectNewBank: &model.AccountBank{
 				Username: suite.userWithoutBalance.Username,
 				PubKey:   txPrivKeys[0].PubKey(),
 				Saving:   types.NewCoinFromInt64(0),
+				Pending:  linotypes.NewCoinFromInt64(0),
 			},
 			expectInfo: &model.AccountInfo{
 				Username:       suite.userWithoutBalance.Username,
@@ -1475,21 +1480,15 @@ func (suite *AccountManagerTestSuite) TestRecoverAccount() {
 			expectErr:        nil,
 			oldAddr:          sdk.AccAddress(suite.userWithBalance.TransactionKey.Address()),
 			expectOldBank: &model.AccountBank{
-				PubKey: suite.userWithBalance.TransactionKey,
-				Saving: types.NewCoinFromInt64(0),
+				PubKey:  suite.userWithBalance.TransactionKey,
+				Saving:  types.NewCoinFromInt64(0),
+				Pending: linotypes.NewCoinFromInt64(0),
 			},
 			expectNewBank: &model.AccountBank{
 				Username: suite.userWithBalance.Username,
 				PubKey:   suite.unreg.TransactionKey,
 				Saving:   suite.unregSaving.Plus(suite.userWithBalanceSaving),
-				FrozenMoneyList: []model.FrozenMoney{
-					{
-						Amount:   types.NewCoinFromInt64(1),
-						StartAt:  0,
-						Interval: 100,
-						Times:    10,
-					},
-				},
+				Pending:  types.NewCoinFromInt64(1),
 			},
 			expectInfo: &model.AccountInfo{
 				Username:       suite.userWithBalance.Username,

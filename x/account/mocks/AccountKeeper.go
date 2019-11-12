@@ -20,13 +20,13 @@ type AccountKeeper struct {
 	mock.Mock
 }
 
-// AddFrozenMoney provides a mock function with given fields: ctx, username, amount, start, interval, times
-func (_m *AccountKeeper) AddFrozenMoney(ctx types.Context, username linotypes.AccountKey, amount linotypes.Coin, start int64, interval int64, times int64) types.Error {
-	ret := _m.Called(ctx, username, amount, start, interval, times)
+// AddPending provides a mock function with given fields: ctx, username, amount
+func (_m *AccountKeeper) AddPending(ctx types.Context, username linotypes.AccountKey, amount linotypes.Coin) types.Error {
+	ret := _m.Called(ctx, username, amount)
 
 	var r0 types.Error
-	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey, linotypes.Coin, int64, int64, int64) types.Error); ok {
-		r0 = rf(ctx, username, amount, start, interval, times)
+	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey, linotypes.Coin) types.Error); ok {
+		r0 = rf(ctx, username, amount)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(types.Error)
@@ -184,31 +184,6 @@ func (_m *AccountKeeper) GetBankByAddress(ctx types.Context, addr types.AccAddre
 
 	var r1 types.Error
 	if rf, ok := ret.Get(1).(func(types.Context, types.AccAddress) types.Error); ok {
-		r1 = rf(ctx, addr)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(types.Error)
-		}
-	}
-
-	return r0, r1
-}
-
-// GetFrozenMoneyList provides a mock function with given fields: ctx, addr
-func (_m *AccountKeeper) GetFrozenMoneyList(ctx types.Context, addr types.Address) ([]model.FrozenMoney, types.Error) {
-	ret := _m.Called(ctx, addr)
-
-	var r0 []model.FrozenMoney
-	if rf, ok := ret.Get(0).(func(types.Context, types.Address) []model.FrozenMoney); ok {
-		r0 = rf(ctx, addr)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]model.FrozenMoney)
-		}
-	}
-
-	var r1 types.Error
-	if rf, ok := ret.Get(1).(func(types.Context, types.Address) types.Error); ok {
 		r1 = rf(ctx, addr)
 	} else {
 		if ret.Get(1) != nil {

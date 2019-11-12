@@ -8,16 +8,9 @@
         "saving": {
           "amount": "2345"
         },
-        "frozen_money_list": [
-          {
-            "amount": {
-              "amount": "99"
-            },
-            "start_at": "123",
-            "times": "1",
-            "interval": "77"
-          }
-        ],
+        "pending": {
+          "amount": "789"
+        },
         "public_key": {
           "type": "tendermint/PubKeySecp256k1",
           "value": "AoFqbXKmblwKVggqb8Cqo30gRKs9EfqwhOhuyOKlGCuD"
@@ -36,7 +29,9 @@
         "saving": {
           "amount": "1234"
         },
-        "frozen_money_list": null,
+        "pending": {
+          "amount": "0"
+        },
         "public_key": {
           "type": "tendermint/PubKeySecp256k1",
           "value": "Aot3u5m7vuxUOszkS6IZW5XYVu6ATvZsfSQIjtQo9tML"

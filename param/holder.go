@@ -142,9 +142,8 @@ func (ph ParamHolder) InitParam(ctx sdk.Context) error {
 	}
 
 	accountParam := &AccountParam{
-		MinimumBalance:    types.NewCoinFromInt64(0),
-		RegisterFee:       types.NewCoinFromInt64(1 * types.Decimals),
-		MaxNumFrozenMoney: 10,
+		MinimumBalance: types.NewCoinFromInt64(0),
+		RegisterFee:    types.NewCoinFromInt64(1 * types.Decimals),
 	}
 	if err := ph.setAccountParam(ctx, accountParam); err != nil {
 		return err

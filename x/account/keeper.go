@@ -36,11 +36,10 @@ type AccountKeeper interface {
 	GetSavingFromUsername(ctx sdk.Context, username types.AccountKey) (types.Coin, sdk.Error)
 	GetSequence(ctx sdk.Context, address sdk.Address) (uint64, sdk.Error)
 	GetAddress(ctx sdk.Context, username types.AccountKey) (sdk.AccAddress, sdk.Error)
-	GetFrozenMoneyList(ctx sdk.Context, addr sdk.Address) ([]model.FrozenMoney, sdk.Error)
 	GetSupply(ctx sdk.Context) model.Supply
 	IncreaseSequenceByOne(ctx sdk.Context, address sdk.Address) sdk.Error
-	AddFrozenMoney(
-		ctx sdk.Context, username types.AccountKey, amount types.Coin, start, interval, times int64) sdk.Error
+	AddPending(
+		ctx sdk.Context, username types.AccountKey, amount types.Coin) sdk.Error
 	CheckSigningPubKeyOwner(
 		ctx sdk.Context, me types.AccountKey, signKey crypto.PubKey) (types.AccountKey, sdk.Error)
 	CheckSigningPubKeyOwnerByAddress(
