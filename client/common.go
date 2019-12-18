@@ -18,6 +18,15 @@ import (
 
 var ValidateCmd = cosmoscli.ValidateCmd
 
+func ParsePubKey(key string) (crypto.PubKey, error) {
+	pubKeyBytes, err := hex.DecodeString(key)
+	if err != nil {
+		return nil, err
+	}
+
+	return cryptoAmino.PubKeyFromBytes(pubKeyBytes)
+}
+
 func ParsePrivKey(key string) (crypto.PrivKey, error) {
 	// @ tag means that priv-key is encrypted in the file.
 	if key[0] == '@' {
