@@ -139,7 +139,6 @@ func (msg TransferV2Msg) GetSignBytes() []byte {
 }
 
 // GetSigners - implements sdk.Msg
-// SHOULD NOT BE USED.
 func (msg TransferV2Msg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Sender.String())}
 }
@@ -200,7 +199,6 @@ func (msg RecoverMsg) GetSignBytes() []byte {
 }
 
 // GetSigners - implements sdk.Msg
-// SHOULD NOT BE USED.
 func (msg RecoverMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sdk.AccAddress(msg.Username), sdk.AccAddress(msg.NewTxPubKey.Address())}
 }
@@ -337,7 +335,6 @@ func (msg RegisterV2Msg) GetSignBytes() []byte {
 }
 
 // GetSigners - implements sdk.Msg
-// SHOULD NOT BE USED
 func (msg RegisterV2Msg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{
 		sdk.AccAddress(msg.Referrer.String()),

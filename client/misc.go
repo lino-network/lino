@@ -67,6 +67,23 @@ func GetAddrOfCmd() *cobra.Command {
 	}
 }
 
+func GetPubKeyOfCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "pubkey-of <@keyfile>",
+		Short: "pubkey-of <@keyfile> prints the hex-encoded string of pubkey, @ included",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			file := args[0]
+			priv, err := ParsePrivKey(file)
+			if err != nil {
+				return err
+			}
+			fmt.Printf("pubkey: %s\n", hex.EncodeToString(priv.PubKey().Bytes()))
+			return nil
+		},
+	}
+}
+
 func GetEncryptPrivKey() *cobra.Command {
 	return &cobra.Command{
 		Use:   "encrypt-key <file>",

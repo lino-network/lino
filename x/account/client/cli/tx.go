@@ -26,6 +26,8 @@ const (
 	FlagAddr        = "addr"
 	FlagAddrSeq     = "addr-seq"
 	FlagAddrPrivKey = "addr-priv-key"
+	FlagNewTxKey    = "new-tx-priv"
+	FlagNewSignKey  = "new-sign-pub"
 )
 
 func GetTxCmd(cdc *codec.Codec) *cobra.Command {
@@ -41,6 +43,7 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 		getCmdRegister(cdc),
 		getCmdTransferV2(cdc),
 		getCmdBind(cdc),
+		getCmdRecover(cdc),
 	)...)
 
 	return cmd
@@ -183,6 +186,44 @@ func getCmdTransferV2(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagMemo, "", "memo msg")
 	_ = cmd.MarkFlagRequired(FlagTo)
 	_ = cmd.MarkFlagRequired(FlagAmount)
+	return cmd
+}
+
+// getCmdRecover -
+func getCmdRecover(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "recover",
+		Short: "recover <username> --new-tx-priv <new-priv-key> --new-sign-pub <pubkey-hex>",
+		Long:  "recover <username> --new-tx-priv <new-priv-key> --new-sign-pub <pubkey-hex>",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := client.NewCoreContextFromViper().WithTxEncoder(linotypes.TxEncoder(cdc))
+			user := args[0]
+			if !linotypes.AccountKey(user).IsValid() {
+				return fmt.Errorf("invalid username: %s", user)
+			}
+
+			txPrivKey, err := client.ParsePrivKey(viper.GetString(FlagNewTxKey))
+			if err != nil {
+				return fmt.Errorf("invalid new tx key: %s", err)
+			}
+
+			signPubKey, err := client.ParsePubKey(viper.GetString(FlagNewSignKey))
+			if err != nil {
+				return fmt.Errorf("invalid new sign key: %s", err)
+			}
+
+			msg := types.NewRecoverMsg(user, txPrivKey.PubKey(), signPubKey)
+			return ctx.DoTxPrintResponse(msg, client.OptionalSigner{
+				PrivKey: txPrivKey,
+				Seq:     0,
+			})
+		},
+	}
+	cmd.Flags().String(FlagNewTxKey, "", "new transaction private key")
+	cmd.Flags().String(FlagNewSignKey, "", "new signing key")
+	_ = cmd.MarkFlagRequired(FlagNewTxKey)
+	_ = cmd.MarkFlagRequired(FlagNewSignKey)
 	return cmd
 }
 
