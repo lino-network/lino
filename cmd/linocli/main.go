@@ -60,6 +60,7 @@ func main() {
 		linoclient.GetNowCmd(cdc),
 		linoclient.GetGenAddrCmd(),
 		linoclient.GetAddrOfCmd(),
+		linoclient.GetPubKeyOfCmd(),
 		linoclient.GetEncryptPrivKey(),
 		client.LineBreak,
 	)

@@ -8,3 +8,4 @@ lino
 linocli
 bin/
 dist/
+*.key
