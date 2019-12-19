@@ -26,8 +26,8 @@ const (
 	FlagAddr        = "addr"
 	FlagAddrSeq     = "addr-seq"
 	FlagAddrPrivKey = "addr-priv-key"
-	FlagNewTxKey    = "new-tx"
-	FlagNewSignKey  = "new-sign"
+	FlagNewTxKey    = "new-tx-priv"
+	FlagNewSignKey  = "new-sign-pub"
 )
 
 func GetTxCmd(cdc *codec.Codec) *cobra.Command {
@@ -193,8 +193,8 @@ func getCmdTransferV2(cdc *codec.Codec) *cobra.Command {
 func getCmdRecover(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "recover",
-		Short: "recover <username> --new-tx <pubkey-hex> --new-sign <pubkey-hex>",
-		Long:  "recover <username> --new-tx <pubkey-hex-of-new-tx-key> --new-sign <pubkey-hex-of-new-sign-key>, ",
+		Short: "recover <username> --new-tx-priv <new-priv-key> --new-sign-pub <pubkey-hex>",
+		Long:  "recover <username> --new-tx-priv <new-priv-key> --new-sign-pub <pubkey-hex>",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := client.NewCoreContextFromViper().WithTxEncoder(linotypes.TxEncoder(cdc))
@@ -203,21 +203,24 @@ func getCmdRecover(cdc *codec.Codec) *cobra.Command {
 				return fmt.Errorf("invalid username: %s", user)
 			}
 
-			txKey, err := client.ParsePubKey(viper.GetString(FlagNewTxKey))
+			txPrivKey, err := client.ParsePrivKey(viper.GetString(FlagNewTxKey))
 			if err != nil {
 				return fmt.Errorf("invalid new tx key: %s", err)
 			}
 
-			pubKey, err := client.ParsePubKey(viper.GetString(FlagNewSignKey))
+			signPubKey, err := client.ParsePubKey(viper.GetString(FlagNewSignKey))
 			if err != nil {
 				return fmt.Errorf("invalid new sign key: %s", err)
 			}
 
-			msg := types.NewRecoverMsg(user, txKey, pubKey)
-			return ctx.DoTxPrintResponse(msg)
+			msg := types.NewRecoverMsg(user, txPrivKey.PubKey(), signPubKey)
+			return ctx.DoTxPrintResponse(msg, client.OptionalSigner{
+				PrivKey: txPrivKey,
+				Seq: 0,
+			})
 		},
 	}
-	cmd.Flags().String(FlagNewTxKey, "", "new transaction key")
+	cmd.Flags().String(FlagNewTxKey, "", "new transaction private key")
 	cmd.Flags().String(FlagNewSignKey, "", "new signing key")
 	_ = cmd.MarkFlagRequired(FlagNewTxKey)
 	_ = cmd.MarkFlagRequired(FlagNewSignKey)
