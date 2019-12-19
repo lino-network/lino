@@ -216,7 +216,7 @@ func getCmdRecover(cdc *codec.Codec) *cobra.Command {
 			msg := types.NewRecoverMsg(user, txPrivKey.PubKey(), signPubKey)
 			return ctx.DoTxPrintResponse(msg, client.OptionalSigner{
 				PrivKey: txPrivKey,
-				Seq: 0,
+				Seq:     0,
 			})
 		},
 	}
