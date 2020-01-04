@@ -192,6 +192,32 @@ func (dm DeveloperManager) IssueIDA(ctx sdk.Context, appname linotypes.AccountKe
 	return nil
 }
 
+func (dm DeveloperManager) IDAConvertFromLino(ctx sdk.Context, username, appname linotypes.AccountKey, amount linotypes.Coin) sdk.Error {
+	if _, err := dm.validAppIDA(ctx, appname); err != nil {
+		return err
+	}
+	if !dm.acc.DoesAccountExist(ctx, username) || !dm.acc.DoesAccountExist(ctx, appname) {
+		return types.ErrAccountNotFound()
+	}
+
+	err := dm.acc.MoveCoin(ctx,
+		linotypes.NewAccOrAddrFromAcc(username),
+		linotypes.NewAccOrAddrFromAcc(appname),
+		amount)
+	if err != nil {
+		return err
+	}
+	miniDollar, err := dm.exchangeMiniDollar(ctx, appname, amount)
+	if err != nil {
+		return err
+	}
+
+	bank := dm.storage.GetIDABank(ctx, appname, username)
+	bank.Balance = bank.Balance.Plus(miniDollar)
+	dm.storage.SetIDABank(ctx, appname, username, bank)
+	return nil
+}
+
 // MintIDA - mint some IDA by converting LINO to IDA (internally MiniDollar).
 func (dm DeveloperManager) MintIDA(ctx sdk.Context, appname linotypes.AccountKey, amount linotypes.Coin) sdk.Error {
 	if _, err := dm.validAppIDA(ctx, appname); err != nil {

@@ -30,6 +30,8 @@ func NewHandler(dm DeveloperKeeper) sdk.Handler {
 			return handleIDAAuthorizeMsg(ctx, dm, msg)
 		case types.UpdateAffiliatedMsg:
 			return handleUpdateAffiliatedMsg(ctx, dm, msg)
+		case types.IDAConvertFromLinoMsg:
+			return handleIDAConvertFromLinoMsg(ctx, dm, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized developer msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -73,6 +75,18 @@ func handleIDAIssueMsg(
 
 func handleIDAMintMsg(
 	ctx sdk.Context, dm DeveloperKeeper, msg types.IDAMintMsg) sdk.Result {
+	amount, err := linotypes.LinoToCoin(msg.Amount)
+	if err != nil {
+		return err.Result()
+	}
+	if err := dm.MintIDA(ctx, msg.Username, amount); err != nil {
+		return err.Result()
+	}
+	return sdk.Result{}
+}
+
+func handleIDAConvertFromLinoMsg(
+	ctx sdk.Context, dm DeveloperKeeper, msg types.IDAConvertFromLinoMsg) sdk.Result {
 	amount, err := linotypes.LinoToCoin(msg.Amount)
 	if err != nil {
 		return err.Result()

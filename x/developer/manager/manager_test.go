@@ -509,6 +509,95 @@ func (suite *DeveloperManagerSuite) TestMintIDA() {
 	}
 }
 
+func (suite *DeveloperManagerSuite) TestIDAConvertFromLino() {
+	amount := linotypes.NewCoinFromInt64(1)
+	// zeroMiniDollar := linotypes.NewMiniDollar(0)
+	validMiniDollar := linotypes.NewMiniDollar(1)
+	user1 := linotypes.AccountKey("user1")
+	testCases := []struct {
+		name                    string
+		appName                 linotypes.AccountKey
+		user                    linotypes.AccountKey
+		amount                  linotypes.Coin
+		expected                sdk.Error
+		coinToMiniDollar        *linotypes.MiniDollar
+		minusCoinFromUserCalled bool
+		minusCoinFromUser       sdk.Error
+	}{
+		{
+			name:     "Fail Developer doesnt exist",
+			appName:  appDoesNotExists,
+			user:     user1,
+			amount:   amount,
+			expected: types.ErrDeveloperNotFound(),
+		},
+		{
+			name:     "Fail App doesnt have IDA",
+			appName:  appWithoutIDA,
+			user:     user1,
+			amount:   amount,
+			expected: types.ErrIDANotFound(),
+		},
+		{
+			name:     "Fail App has revoked IDA",
+			appName:  appHasRevokedIDA,
+			user:     user1,
+			amount:   amount,
+			expected: types.ErrIDARevoked(),
+		},
+		{
+			name:                    "Fail accMinusCoinFromUsername returns error",
+			appName:                 appTest,
+			user:                    user1,
+			amount:                  amount,
+			coinToMiniDollar:        &validMiniDollar,
+			minusCoinFromUserCalled: true,
+			minusCoinFromUser:       sdk.ErrInternal("minus coin from username failed"),
+			expected:                sdk.ErrInternal("minus coin from username failed"),
+		},
+		{
+			name:                    "Success",
+			appName:                 appTest,
+			user:                    user1,
+			amount:                  amount,
+			coinToMiniDollar:        &validMiniDollar,
+			minusCoinFromUserCalled: true,
+			minusCoinFromUser:       nil,
+			expected:                nil,
+		},
+	}
+	for _, c := range testCases {
+		suite.Run(c.name, func() {
+			suite.mAccountKeeper.On("DoesAccountExist", mock.Anything, c.user).Return(true).Maybe()
+			suite.mAccountKeeper.On("DoesAccountExist", mock.Anything, c.appName).Return(true).Maybe()
+			if c.minusCoinFromUserCalled {
+				suite.mAccountKeeper.On(
+					"MoveCoin", mock.Anything,
+					linotypes.NewAccOrAddrFromAcc(c.user),
+					linotypes.NewAccOrAddrFromAcc(c.appName), c.amount).Return(nil).Once()
+			}
+			if c.coinToMiniDollar != nil {
+				suite.mPriceKeeper.On("CoinToMiniDollar", mock.Anything,
+					c.amount).Return(*c.coinToMiniDollar, nil).Once()
+			}
+			if c.minusCoinFromUserCalled {
+				suite.mAccountKeeper.On("MoveToPool", mock.Anything,
+					linotypes.DevIDAReservePool, linotypes.NewAccOrAddrFromAcc(c.appName),
+					c.amount).Return(c.minusCoinFromUser).Once()
+			}
+			suite.LoadState(false)
+			suite.Equal(c.expected, suite.manager.IDAConvertFromLino(
+				suite.Ctx, c.user, c.appName, c.amount))
+			suite.Golden()
+			if c.expected != nil {
+				suite.AssertStateUnchanged(false)
+			}
+			suite.mPriceKeeper.AssertExpectations(suite.T())
+			suite.mAccountKeeper.AssertExpectations(suite.T())
+		})
+	}
+}
+
 func (suite *DeveloperManagerSuite) TestPrivateAppIDAMove() {
 	to := linotypes.AccountKey("to")
 	from := linotypes.AccountKey("from")

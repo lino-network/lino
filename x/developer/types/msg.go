@@ -306,6 +306,57 @@ func (msg IDAMintMsg) GetConsumeAmount() types.Coin {
 	return types.NewCoinFromInt64(0)
 }
 
+// IDAConvertFromLinoMsg - convert from lino to ida.
+type IDAConvertFromLinoMsg struct {
+	Username types.AccountKey `json:"username"`
+	App      types.AccountKey `json:"app"`
+	Amount   types.LNO        `json:"amount"`
+}
+
+var _ types.Msg = IDAConvertFromLinoMsg{}
+
+// Route - implements sdk.Msg
+func (msg IDAConvertFromLinoMsg) Route() string { return RouterKey }
+
+// Type - implements sdk.Msg
+func (msg IDAConvertFromLinoMsg) Type() string { return "IDAConvertFromLinoMsg" }
+
+// ValidateBasic - implements sdk.Msg
+func (msg IDAConvertFromLinoMsg) ValidateBasic() sdk.Error {
+	if !msg.Username.IsValid() || !msg.App.IsValid() {
+		return ErrInvalidUsername()
+	}
+	_, err := types.LinoToCoin(msg.Amount)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (msg IDAConvertFromLinoMsg) String() string {
+	return fmt.Sprintf("IDAConvertFromLinoMsg{user:%s, app:%s, amount:%s}",
+		msg.Username, msg.App, msg.Amount)
+}
+
+func (msg IDAConvertFromLinoMsg) GetPermission() types.Permission {
+	return types.TransactionPermission
+}
+
+// GetSignBytes - implements sdk.Msg
+func (msg IDAConvertFromLinoMsg) GetSignBytes() []byte {
+	return getSignBytes(msg)
+}
+
+// GetSigners - implements sdk.Msg
+func (msg IDAConvertFromLinoMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.Username)}
+}
+
+// GetConsumeAmount - implements types.Msg
+func (msg IDAConvertFromLinoMsg) GetConsumeAmount() types.Coin {
+	return types.NewCoinFromInt64(0)
+}
+
 // IDATransferMsg - Transfer IDA.
 type IDATransferMsg struct {
 	App    types.AccountKey `json:"app"`

@@ -12,6 +12,7 @@ func RegisterWire(cdc *wire.Codec) {
 	cdc.RegisterConcrete(IDAIssueMsg{}, "lino/IDAIssue", nil)
 	cdc.RegisterConcrete(IDAMintMsg{}, "lino/IDAMint", nil)
 	cdc.RegisterConcrete(IDATransferMsg{}, "lino/IDATransfer", nil)
+	cdc.RegisterConcrete(IDAConvertFromLinoMsg{}, "lino/IDAConvertFromLino", nil)
 	cdc.RegisterConcrete(IDAAuthorizeMsg{}, "lino/IDAAuthorize", nil)
 	cdc.RegisterConcrete(UpdateAffiliatedMsg{}, "lino/UpdateAffiliated", nil)
 }
