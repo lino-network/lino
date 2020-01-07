@@ -97,7 +97,7 @@ func handleIDAConvertFromLinoMsg(
 	if err != nil {
 		return err.Result()
 	}
-	if err := dm.MintIDA(ctx, msg.Username, amount); err != nil {
+	if err := dm.IDAConvertFromLino(ctx, msg.Username, msg.App, amount); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}

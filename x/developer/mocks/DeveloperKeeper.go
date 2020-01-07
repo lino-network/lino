@@ -270,6 +270,22 @@ func (_m *DeveloperKeeper) GetReservePool(ctx types.Context) model.ReservePool {
 	return r0
 }
 
+// IDAConvertFromLino provides a mock function with given fields: ctx, username, appname, amount
+func (_m *DeveloperKeeper) IDAConvertFromLino(ctx types.Context, username linotypes.AccountKey, appname linotypes.AccountKey, amount linotypes.Coin) types.Error {
+	ret := _m.Called(ctx, username, appname, amount)
+
+	var r0 types.Error
+	if rf, ok := ret.Get(0).(func(types.Context, linotypes.AccountKey, linotypes.AccountKey, linotypes.Coin) types.Error); ok {
+		r0 = rf(ctx, username, appname, amount)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(types.Error)
+		}
+	}
+
+	return r0
+}
+
 // ImportFromFile provides a mock function with given fields: ctx, cdc, filepath
 func (_m *DeveloperKeeper) ImportFromFile(ctx types.Context, cdc *amino.Codec, filepath string) error {
 	ret := _m.Called(ctx, cdc, filepath)
