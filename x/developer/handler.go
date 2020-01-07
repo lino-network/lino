@@ -31,7 +31,13 @@ func NewHandler(dm DeveloperKeeper) sdk.Handler {
 		case types.UpdateAffiliatedMsg:
 			return handleUpdateAffiliatedMsg(ctx, dm, msg)
 		case types.IDAConvertFromLinoMsg:
-			return handleIDAConvertFromLinoMsg(ctx, dm, msg)
+			if ctx.BlockHeight() >= linotypes.Upgrade5Update2 {
+				return handleIDAConvertFromLinoMsg(ctx, dm, msg)
+			} else {
+				errMsg := fmt.Sprintf(
+					"Unrecognized developer msg type: %v", reflect.TypeOf(msg).Name())
+				return sdk.ErrUnknownRequest(errMsg).Result()
+			}
 		default:
 			errMsg := fmt.Sprintf("Unrecognized developer msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
