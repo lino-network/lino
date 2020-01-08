@@ -28,6 +28,7 @@ type DeveloperKeeper interface {
 	// IDA
 	IssueIDA(ctx sdk.Context, appname linotypes.AccountKey, idaName string, idaPrice int64) sdk.Error
 	MintIDA(ctx sdk.Context, appname linotypes.AccountKey, amount linotypes.Coin) sdk.Error
+	IDAConvertFromLino(ctx sdk.Context, username, appname linotypes.AccountKey, amount linotypes.Coin) sdk.Error
 	GetMiniIDAPrice(ctx sdk.Context, app linotypes.AccountKey) (linotypes.MiniDollar, sdk.Error)
 	AppTransferIDA(ctx sdk.Context, appname, signer linotypes.AccountKey, amount linotypes.MiniIDA, from, to linotypes.AccountKey) sdk.Error
 	MoveIDA(ctx sdk.Context, app linotypes.AccountKey, from, to linotypes.AccountKey, amount linotypes.MiniDollar) sdk.Error

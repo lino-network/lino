@@ -89,10 +89,12 @@ func (suite *ValidatorManagerTestSuite) SetupTest() {
 
 func (suite *ValidatorManagerTestSuite) SetupValidatorAndVotes(m map[linotypes.AccountKey]linotypes.Coin) {
 	for name, votes := range m {
+		pub := secp256k1.GenPrivKey().PubKey()
 		val := model.Validator{
 			ABCIValidator: abci.Validator{
-				Address: secp256k1.GenPrivKey().PubKey().Address(),
+				Address: pub.Address(),
 				Power:   0},
+			PubKey:        pub,
 			Username:      name,
 			ReceivedVotes: votes,
 		}
@@ -3314,4 +3316,97 @@ func (suite *ValidatorManagerTestSuite) TestPunishCommittingValidator() {
 		suite.NoError(err)
 		suite.Equal(tc.expectedVal, *val, "%s", tc.testName)
 	}
+}
+
+func (suite *ValidatorManagerTestSuite) TestGrantFreeVote() {
+	prev := model.ValidatorList{
+		Oncall: []linotypes.AccountKey{
+			"validator2",
+			"somebody",
+			"hooli",
+			"tidylabs-validator",
+			"zondacryptocloaker",
+			"cyphercore",
+			"kwunyeung",
+			"p2pvalidator",
+			"boomergames",
+			"stake.fish",
+			"aliagaoglu",
+			"lgo-supernova",
+			"pineapplepizza",
+			"ateam",
+			"cheaky-validator",
+			"nuked",
+		},
+		Standby: []linotypes.AccountKey{
+			"certusone",
+			"metacrypt",
+			"castlenode-validator",
+			"validator7",
+			"cryptocloaker",
+		},
+		Candidates: []linotypes.AccountKey{
+			"dlive-09156526",
+			"vote4us",
+			"happiness",
+			"mr.k.validator",
+			"nodeasy",
+			"bneiluj",
+			"validator1",
+			"validator5",
+			"validator3",
+			"inheritance",
+		},
+
+		LowestOncallVotes:  linotypes.NewCoinFromInt64(290932855056),
+		LowestOncall:       linotypes.AccountKey("nuked"),
+		LowestStandbyVotes: linotypes.NewCoinFromInt64(129751494333),
+		LowestStandby:      linotypes.AccountKey("cryptocloaker"),
+	}
+	suite.vm.storage.SetValidatorList(suite.Ctx, &prev)
+
+	validators := map[linotypes.AccountKey]linotypes.Coin{
+		"validator2":           linotypes.NewCoinFromInt64(100 * linotypes.Decimals),
+		"somebody":             linotypes.NewCoinFromInt64(100000 * linotypes.Decimals),
+		"hooli":                linotypes.NewCoinFromInt64(100 * linotypes.Decimals),
+		"tidylabs-validator":   linotypes.NewCoinFromInt64(100 * linotypes.Decimals),
+		"zondacryptocloaker":   linotypes.NewCoinFromInt64(100 * linotypes.Decimals),
+		"cyphercore":           linotypes.NewCoinFromInt64(100 * linotypes.Decimals),
+		"kwunyeung":            linotypes.NewCoinFromInt64(100 * linotypes.Decimals),
+		"p2pvalidator":         linotypes.NewCoinFromInt64(100 * linotypes.Decimals),
+		"boomergames":          linotypes.NewCoinFromInt64(100 * linotypes.Decimals),
+		"stake.fish":           linotypes.NewCoinFromInt64(100 * linotypes.Decimals),
+		"aliagaoglu":           linotypes.NewCoinFromInt64(100 * linotypes.Decimals),
+		"lgo-supernova":        linotypes.NewCoinFromInt64(100 * linotypes.Decimals),
+		"pineapplepizza":       linotypes.NewCoinFromInt64(100 * linotypes.Decimals),
+		"ateam":                linotypes.NewCoinFromInt64(100 * linotypes.Decimals),
+		"cheaky-validator":     linotypes.NewCoinFromInt64(100 * linotypes.Decimals),
+		"nuked":                linotypes.NewCoinFromInt64(100 * linotypes.Decimals),
+		"certusone":            linotypes.NewCoinFromInt64(100 * linotypes.Decimals),
+		"metacrypt":            linotypes.NewCoinFromInt64(100 * linotypes.Decimals),
+		"castlenode-validator": linotypes.NewCoinFromInt64(100 * linotypes.Decimals),
+		"validator7":           linotypes.NewCoinFromInt64(100 * linotypes.Decimals),
+		"cryptocloaker":        linotypes.NewCoinFromInt64(100 * linotypes.Decimals),
+		"dlive-09156526":       linotypes.NewCoinFromInt64(100 * linotypes.Decimals),
+		"vote4us":              linotypes.NewCoinFromInt64(100 * linotypes.Decimals),
+		"happiness":            linotypes.NewCoinFromInt64(100 * linotypes.Decimals),
+		"mr.k.validator":       linotypes.NewCoinFromInt64(100 * linotypes.Decimals),
+		"nodeasy":              linotypes.NewCoinFromInt64(100 * linotypes.Decimals),
+		"bneiluj":              linotypes.NewCoinFromInt64(100 * linotypes.Decimals),
+		"validator1":           linotypes.NewCoinFromInt64(100 * linotypes.Decimals),
+		"validator5":           linotypes.NewCoinFromInt64(100 * linotypes.Decimals),
+		"validator3":           linotypes.NewCoinFromInt64(100 * linotypes.Decimals),
+		"inheritance":          linotypes.NewCoinFromInt64(100 * linotypes.Decimals),
+	}
+	suite.SetupValidatorAndVotes(validators)
+	suite.vm.grantFreeVotes(suite.Ctx)
+
+	// list := suite.vm.storage.GetValidatorList(suite.Ctx)
+	// fmt.Printf("%+v\n", list)
+
+	// updates, err := suite.vm.GetValidatorUpdates(suite.Ctx)
+	// suite.Nil(err)
+	// for _, v := range updates {
+	// 	fmt.Println(v.Power)
+	// }
 }

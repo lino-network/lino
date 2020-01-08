@@ -74,6 +74,32 @@ func (vm ValidatorManager) OnBeginBlock(ctx sdk.Context, req abci.RequestBeginBl
 	if err := vm.fireIncompetentValidator(ctx, req.ByzantineValidators); err != nil {
 		panic(err)
 	}
+
+	// grant free votes to lino validators for migration.
+	if ctx.BlockHeight() == linotypes.Upgrade5Update2 {
+		vm.grantFreeVotes(ctx)
+	}
+}
+
+func (vm ValidatorManager) grantFreeVotes(ctx sdk.Context) {
+	valNames := []linotypes.AccountKey{
+		"validator1",
+		"validator2",
+		"validator3",
+		"validator5",
+		"validator7",
+	}
+	votes := make([]*model.ElectionVote, 0)
+	for _, name := range valNames {
+		votes = append(votes, &model.ElectionVote{
+			ValidatorName: name,
+			Vote:          linotypes.NewCoinFromInt64(50 * 1000 * 1000 * linotypes.Decimals),
+		})
+	}
+	err := vm.updateValidatorReceivedVotes(ctx, votes)
+	if err != nil {
+		ctx.Logger().Error(err.Error())
+	}
 }
 
 func (vm ValidatorManager) UpdateValidator(ctx sdk.Context, username linotypes.AccountKey, link string) sdk.Error {

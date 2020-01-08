@@ -179,6 +179,9 @@ const (
 	// Fast Stake-out period
 	Upgrade5Update1 = 110000
 
+	// Migration
+	Upgrade5Update2 = 1670000
+
 	// TxSigLimit - max number of sigs in one transaction
 	// XXX(yumin): This will actually limit the number of msg per tx to at most 2.
 	TxSigLimit = 2
