@@ -182,6 +182,9 @@ const (
 	// Migration
 	Upgrade5Update2 = 1670000
 
+	// Execute future unstake events once.
+	Upgrade5Update3 = 1930000
+
 	// TxSigLimit - max number of sigs in one transaction
 	// XXX(yumin): This will actually limit the number of msg per tx to at most 2.
 	TxSigLimit = 2
