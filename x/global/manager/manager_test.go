@@ -24,9 +24,19 @@ type testEvent struct {
 	Id int64 `json:"id"`
 }
 
+type testBadEvent struct {
+	Id int64 `json:"id"`
+}
+
+type testIgnoredEvent struct {
+	Id int64 `json:"id"`
+}
+
 func regTestCodec(c *wire.Codec) {
 	c.RegisterInterface((*linotypes.Event)(nil), nil)
 	c.RegisterConcrete(testEvent{}, "lino/testevent", nil)
+	c.RegisterConcrete(testBadEvent{}, "lino/testbadevent", nil)
+	c.RegisterConcrete(testIgnoredEvent{}, "lino/testignoredevent", nil)
 }
 
 func testCodec() *wire.Codec {
@@ -237,6 +247,86 @@ func (suite *globalManagerTestSuite) TestEventErrIsolation() {
 	suite.Equal(1, len(suite.global.GetEventErrors(suite.Ctx)))             // err logged
 	suite.Equal(init, suite.global.GetGlobalTime(suite.Ctx).ChainStartTime) // state not changed
 	suite.Golden()
+}
+
+func (suite *globalManagerTestSuite) TestExecFutureEvents() {
+	suite.NextBlock(time.Unix(0, 0))
+	suite.global.InitGenesis(suite.Ctx)
+
+	init := int64(123456)
+	t0 := init - 1
+	t1 := init + 1
+	t2 := init + 30
+
+	id := int64(0)
+	for _, t := range []int64{t0, t1, t2} {
+		err := suite.global.RegisterEventAtTime(suite.Ctx, t, testEvent{Id: id})
+		suite.Nil(err)
+		err = suite.global.RegisterEventAtTime(suite.Ctx, t, testEvent{Id: id})
+		suite.Nil(err)
+		err = suite.global.RegisterEventAtTime(suite.Ctx, t, testBadEvent{Id: id})
+		suite.Nil(err)
+		err = suite.global.RegisterEventAtTime(suite.Ctx, t, testIgnoredEvent{Id: id})
+		suite.Nil(err)
+
+	}
+
+	suite.NextBlock(time.Unix(init, 0))
+
+	count := 0
+	filter := func(ts int64, event linotypes.Event) bool {
+		if ts < init {
+			return false
+		}
+		switch event.(type) {
+		case testEvent, testBadEvent:
+			return true
+		default:
+			return false
+		}
+	}
+	suite.global.execFutureEvents(suite.Ctx,
+		func(ctx sdk.Context, event linotypes.Event) sdk.Error {
+			switch event.(type) {
+			case testEvent:
+				count++
+				return nil
+			case testBadEvent:
+				return linotypes.ErrTestDummyError()
+			default:
+				suite.FailNow("executing events that should be ignored")
+				return nil
+			}
+		},
+		filter,
+	)
+	suite.Equal(4, count)
+
+	// bad is no longer bad.
+	suite.global.execFutureEvents(suite.Ctx,
+		func(ctx sdk.Context, event linotypes.Event) sdk.Error {
+			switch event.(type) {
+			case testEvent, testBadEvent:
+				count++
+				return nil
+			default:
+				suite.FailNow("executing events that should be ignored")
+				return nil
+			}
+		},
+		filter,
+	)
+	suite.Equal(6, count)
+
+	// ignored is not ignored.
+	suite.global.execFutureEvents(suite.Ctx,
+		func(ctx sdk.Context, event linotypes.Event) sdk.Error {
+			count++
+			return nil
+		},
+		func(ts int64, event linotypes.Event) bool { return ts > init },
+	)
+	suite.Equal(8, count)
 }
 
 func (suite *globalManagerTestSuite) TestImportExport() {

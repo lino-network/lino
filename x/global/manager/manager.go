@@ -13,6 +13,8 @@ import (
 	"github.com/lino-network/lino/utils"
 	"github.com/lino-network/lino/x/global/model"
 	"github.com/lino-network/lino/x/global/types"
+
+	accmn "github.com/lino-network/lino/x/account/manager"
 )
 
 const (
@@ -162,6 +164,61 @@ func (gm GlobalManager) ExecuteEvents(ctx sdk.Context, exec linotypes.EventExec)
 			}
 		}
 		gm.storage.RemoveTimeEventList(ctx, i)
+	}
+
+	// upgrade-3 unlock all.
+	if ctx.BlockHeight() == linotypes.Upgrade5Update3 {
+		gm.execFutureEvents(ctx, exec, func(ts int64, event linotypes.Event) bool {
+			if ts < currentTime {
+				return false
+			}
+			switch event.(type) {
+			case accmn.ReturnCoinEvent:
+				return true
+			default:
+				return false
+			}
+		})
+	}
+}
+
+// resolveFutureEvents does not return err. Events are executed in an isolated env,
+// so it's fine to ignore errors but leave them in the store.
+func (gm GlobalManager) execFutureEvents(
+	ctx sdk.Context, exec linotypes.EventExec,
+	filter func(ts int64, event linotypes.Event) bool) {
+	eventLists := make(map[int64]*linotypes.TimeEventList)
+	store := gm.storage.PartialStoreMap(ctx)
+	// change store will invalidate the iterator, so copy first.
+	store[string(model.TimeEventListSubStore)].Iterate(func(key []byte, val interface{}) bool {
+		ts, err := strconv.ParseInt(string(key), 10, 64)
+		if err != nil {
+			return false
+		}
+		eventLists[ts] = val.(*linotypes.TimeEventList)
+		return false
+	})
+
+	for ts, eventList := range eventLists {
+		if eventList == nil {
+			continue
+		}
+		left := linotypes.TimeEventList{}
+		for _, event := range eventList.Events {
+			if filter(ts, event) {
+				err := gm.runEventIsolated(ctx, exec, event)
+				if err != nil {
+					left.Events = append(left.Events, event)
+				}
+			} else {
+				left.Events = append(left.Events, event)
+			}
+		}
+		if len(left.Events) == 0 {
+			gm.storage.RemoveTimeEventList(ctx, ts)
+		} else {
+			gm.storage.SetTimeEventList(ctx, ts, &left)
+		}
 	}
 }
 
