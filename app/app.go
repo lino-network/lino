@@ -586,7 +586,7 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 	accManager := lb.accountManager.(accmn.AccountManager)
 	devManager := lb.developerManager.(devmn.DeveloperManager)
 	accManager.IterateUsers(ctx, func(username types.AccountKey) {
-		amount, err := devManager.GetIDABalance(ctx, "dlive-tv", username)
+		amount, err := devManager.GetIDABalance(ctx, "dlivetv", username)
 		if err != nil {
 			panic(err)
 		}
