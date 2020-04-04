@@ -582,7 +582,6 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 	writer := csv.NewWriter(file)
 	defer writer.Flush()
 
-	exportTs := ctx.BlockTime().Unix()
 	accManager := lb.accountManager.(accmn.AccountManager)
 	devManager := lb.developerManager.(devmn.DeveloperManager)
 	accManager.IterateUsers(ctx, func(username types.AccountKey) {
@@ -594,7 +593,7 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 		if err := writer.Write([]string{
 			string(username),
 			fmt.Sprintf("%d", amount),
-			fmt.Sprintf("%d", exportTs)}); err != nil {
+		}); err != nil {
 			panic(err)
 		}
 	})
