@@ -588,7 +588,7 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 	accManager.IterateUsers(ctx, func(username types.AccountKey) {
 		amount, err := devManager.GetIDABalance(ctx, "dlivetv", username)
 		if err != nil {
-			ctx.Logger().Error("skipped ida amount overflowed: %s", username)
+			ctx.Logger().Error(fmt.Sprintf("skipped ida amount overflowed: %s", username))
 			return
 		}
 		if err := writer.Write([]string{
