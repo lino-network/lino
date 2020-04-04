@@ -588,10 +588,13 @@ func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessag
 	accManager.IterateUsers(ctx, func(username types.AccountKey) {
 		amount, err := devManager.GetIDABalance(ctx, "dlivetv", username)
 		if err != nil {
-			panic(err)
+			ctx.Logger().Error("skipped ida amount overflowed: %s", username)
+			return
 		}
 		if err := writer.Write([]string{
-			string(username), fmt.Sprintf("%d", amount), fmt.Sprintf("%d", exportTs)}); err != nil {
+			string(username),
+			fmt.Sprintf("%d", amount),
+			fmt.Sprintf("%d", exportTs)}); err != nil {
 			panic(err)
 		}
 	})
