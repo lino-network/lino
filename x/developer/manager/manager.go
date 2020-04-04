@@ -619,7 +619,7 @@ func (dm DeveloperManager) GetIDABalance(ctx sdk.Context, app, user linotypes.Ac
 		return 0, err
 	}
 
-	idaAmount := bank.Balance.Quo(price.Int).ToDec().Quo(sdk.NewDec(linotypes.Decimals))
+	idaAmount := bank.Balance.Quo(price.Int)
 	if !idaAmount.IsInt64() {
 		return 0, sdk.ErrInternal("ida amount overflow")
 	}
