@@ -607,6 +607,15 @@ func (accManager AccountManager) GetSupply(ctx sdk.Context) model.Supply {
 	return *accManager.storage.GetSupply(ctx)
 }
 
+func (am AccountManager) IterateUsers(ctx sdk.Context, f func(username linotypes.AccountKey)) {
+	substores := am.storage.PartialStoreMap(ctx)
+	substores[string(model.AccountInfoSubstore)].Iterate(func(key []byte, val interface{}) bool {
+		acc := val.(*model.AccountInfo)
+		f(acc.Username)
+		return false
+	})
+}
+
 // ExportToFile -
 func (am AccountManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
 	state := &model.AccountTablesIR{

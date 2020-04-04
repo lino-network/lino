@@ -609,6 +609,24 @@ func (dm DeveloperManager) GetIDAStats(ctx sdk.Context, app linotypes.AccountKey
 	return stats, nil
 }
 
+func (dm DeveloperManager) GetIDABalance(ctx sdk.Context, app, user linotypes.AccountKey) (int64, sdk.Error) {
+	price, err := dm.GetMiniIDAPrice(ctx, app)
+	if err != nil {
+		return 0, err
+	}
+	bank, err := dm.GetIDABank(ctx, app, user)
+	if err != nil {
+		return 0, err
+	}
+
+	idaAmount := bank.Balance.Quo(price.Int).ToDec().Quo(sdk.NewDec(linotypes.Decimals))
+	if !idaAmount.IsInt64() {
+		return 0, sdk.ErrInternal("ida amount overflow")
+	}
+
+	return idaAmount.Int64(), nil
+}
+
 func (dm DeveloperManager) ExportToFile(ctx sdk.Context, cdc *codec.Codec, filepath string) error {
 	state := &model.DeveloperTablesIR{
 		Version: exportVersion,

@@ -1,11 +1,11 @@
 package app
 
 import (
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"io"
 	"os"
-	"sync"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	wire "github.com/cosmos/cosmos-sdk/codec"
@@ -55,6 +55,7 @@ const (
 	// state files
 	prevStateFolder     = "prevstates/"
 	currStateFolder     = "currstates/"
+	lastStateFolder     = "last/"
 	accountStateFile    = "account"
 	developerStateFile  = "developer"
 	postStateFile       = "post"
@@ -566,34 +567,35 @@ func (lb *LinoBlockchain) getImportExportModules() []importExportModule {
 func (lb *LinoBlockchain) ExportAppStateAndValidators() (appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
 	ctx := lb.NewContext(true, abci.Header{})
 
-	exportPath := lb.GetHomeDir() + "/" + currStateFolder
+	exportPath := lb.GetHomeDir() + "/" + lastStateFolder
 	err = os.MkdirAll(exportPath, os.ModePerm)
 	if err != nil {
 		panic("failed to create export dir due to: " + err.Error())
 	}
 
-	var wg sync.WaitGroup
-	modules := lb.getImportExportModules()
-	for i := range modules {
-		wg.Add(1)
-		go func(i int) {
-			defer wg.Done()
-			err := modules[i].module.ExportToFile(ctx, lb.cdc, exportPath+modules[i].filename)
-			if err != nil {
-				panic(err)
-			}
-			fmt.Printf("Export %s Done\n", modules[i].filename)
-		}(i)
-	}
-
-	wg.Wait()
-
-	genesisState := GenesisState{}
-
-	appState, err = wire.MarshalJSONIndent(lb.cdc, genesisState)
+	file, err := os.Create(exportPath + "ida.csv")
 	if err != nil {
-		return nil, nil, err
+		panic(err)
 	}
+	defer file.Close()
+
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
+
+	exportTs := ctx.BlockTime().Unix()
+	accManager := lb.accountManager.(accmn.AccountManager)
+	devManager := lb.developerManager.(devmn.DeveloperManager)
+	accManager.IterateUsers(ctx, func(username types.AccountKey) {
+		amount, err := devManager.GetIDABalance(ctx, "dlive-tv", username)
+		if err != nil {
+			panic(err)
+		}
+		if err := writer.Write([]string{
+			string(username), fmt.Sprintf("%d", amount), fmt.Sprintf("%d", exportTs)}); err != nil {
+			panic(err)
+		}
+	})
+
 	return appState, validators, nil
 }
 
