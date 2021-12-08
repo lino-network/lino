@@ -9,3 +9,4 @@ linocli
 bin/
 dist/
 *.key
+.idea
